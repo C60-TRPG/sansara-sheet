@@ -709,8 +709,8 @@
                                             <tr class="bg-transparent">
                                                 <td><input v-model="item.name" class="table-input font-bold"></td>
                                                 <td><input v-model="item.part" class="table-input w-16"></td>
-                                                <td><input v-model.number="item.ap" type="number"
-                                                        class="table-input w-10 text-center"></td>
+                                                <td><input v-model="item.ap" type="text"
+                                                        class="table-input w-20 text-center"></td>
                                                 <td><input v-model="item.range" class="table-input w-16"></td>
                                                 <td><input v-model="item.target" class="table-input w-16"></td>
                                                 <td><input v-model="item.check" class="table-input w-16"></td>
@@ -739,7 +739,7 @@
                                 </table>
                             </div>
                             <div class="btn-add" v-if="!isReadOnly"
-                                @click="addRow(character.weapons, {name:'',part:'',ap:0,range:'',target:'',check:'',fVal:0,cVal:0,power:'',weight:0,price:0,details:''})">
+                                @click="addRow(character.weapons, {name:'',part:'',ap:'',range:'',target:'',check:'',fVal:0,cVal:0,power:'',weight:0,price:0,details:''})">
                                 + 行追加</div>
                         </div>
 
@@ -753,7 +753,7 @@
                                         <tr>
                                             <th>名前</th>
                                             <th>装甲</th>
-                                            <th>HP修</th>
+                                            <th>HP修正</th>
                                             <th>重量</th>
                                             <th></th>
                                         </tr>
@@ -812,8 +812,8 @@
                                         <template v-for="(item, idx) in character.vehicles" :key="idx">
                                             <tr class="bg-transparent">
                                                 <td><input v-model="item.name" class="table-input font-bold"></td>
-                                                <td><input v-model.number="item.ap" type="number"
-                                                        class="table-input w-10 text-center"></td>
+                                                <td><input v-model="item.ap" type="text"
+                                                        class="table-input w-20 text-center"></td>
                                                 <td><input v-model="item.range" class="table-input w-12"></td>
                                                 <td><input v-model="item.target" class="table-input w-12"></td>
                                                 <td><input v-model.number="item.cVal" type="number"
@@ -842,7 +842,7 @@
                                     </tbody>
                                 </table>
                                 <div class="btn-add" v-if="!isReadOnly"
-                                    @click="addRow(character.vehicles, {name:'',ap:0,range:'',target:'',cVal:0,fVal:0,check:'',armor:0,power:'',condition:'',price:0,details:''})">
+                                    @click="addRow(character.vehicles, {name:'',ap:'',range:'',target:'',cVal:0,fVal:0,check:'',armor:0,power:'',condition:'',price:0,details:''})">
                                     +
                                     行追加</div>
                             </div>
