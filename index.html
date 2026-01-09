@@ -1,0 +1,1624 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRPG Character Sheet System (CDN)</title>
+
+    <!-- Tailwind CSS (Play CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Vue.js 3 (Global Build) -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+    <!-- Supabase JS (CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            850: '#1e293b', // fallback
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer base {
+            body {
+                font-family: 'Inter', sans-serif;
+                @apply bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-200 transition-colors duration-300;
+            }
+            [v-cloak] { display: none; }
+        }
+
+        @layer components {
+            .input-base {
+                @apply w-full px-2 py-1 rounded border transition-colors
+                       bg-white border-slate-300 text-slate-800
+                       dark:bg-slate-800 dark:border-slate-700 dark:text-white
+                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+            }
+
+            .section-title {
+                @apply text-lg font-bold border-b-2 pb-2 mb-4
+                       border-slate-300 text-blue-600
+                       dark:border-slate-700 dark:text-blue-400;
+            }
+
+            .label-sm {
+                @apply block text-xs mb-1
+                       text-slate-500
+                       dark:text-slate-400;
+            }
+
+            .table-input {
+                @apply w-full bg-transparent border-none p-1 transition-colors
+                       text-slate-800
+                       dark:text-white
+                       focus:ring-1 focus:ring-blue-500 focus:bg-slate-100 dark:focus:bg-slate-900;
+            }
+
+            /* Custom Utility for Panel Backgrounds */
+            .panel {
+                @apply p-6 rounded-xl border
+                       bg-white border-slate-200
+                       dark:bg-slate-800 dark:border-slate-700 shadow-sm dark:shadow-none;
+            }
+            
+            .btn-del {
+                @apply cursor-pointer text-red-500 hover:text-red-700 dark:hover:text-red-400 font-bold;
+            }
+            
+            .btn-add {
+                @apply text-xs mt-2 cursor-pointer font-bold
+                       text-blue-600 hover:text-blue-800
+                       dark:text-blue-400 dark:hover:text-blue-300;
+            }
+        }
+        
+        /* Table Styles */
+        th { @apply text-left p-2 text-xs font-normal text-slate-500 dark:text-slate-400; }
+        td { @apply p-1 border-slate-200 dark:border-slate-700; }
+    </style>
+</head>
+
+<body class="min-h-screen">
+
+    <div id="app" v-cloak class="container mx-auto p-2 pb-20 max-w-6xl">
+
+        <!-- HEADER & NAV -->
+        <header class="panel flex justify-between items-center mb-6 py-4 px-4 shadow-lg sticky top-2 z-[100]">
+            <h1 class="text-xl font-bold cursor-pointer select-none text-slate-800 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-blue-400 dark:to-purple-400 transition-colors"
+                @click="view = 'dashboard'">
+                サンサーラ・バラッド　CS
+            </h1>
+
+            <div class="flex gap-4 items-center text-sm">
+                <!-- Theme Toggle -->
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] text-slate-500 dark:text-slate-400 hidden sm:inline">ライト/ダークモード切替</span>
+                    <button @click="toggleTheme"
+                        class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition" title="テーマ切り替え">
+                        {{ isDark ? '🌙' : '☀️' }}
+                    </button>
+                </div>
+
+                <!-- User Nav -->
+                <template v-if="user">
+                    <span class="hidden md:inline text-slate-500 dark:text-slate-400">{{ user.email }}</span>
+                    <button @click="view = 'dashboard'" :class="{'text-blue-500 font-bold': view==='dashboard'}"
+                        class="hover:text-blue-600 dark:hover:text-blue-300 transition">一覧</button>
+                    <button @click="signOut"
+                        class="px-3 py-1 rounded transition border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-600">ログアウト</button>
+                </template>
+            </div>
+        </header>
+
+        <!-- NOTIFICATION -->
+        <div v-if="message"
+            class="fixed top-4 right-4 z-[200] p-4 rounded shadow-2xl backdrop-blur-md transition-all duration-500"
+            :class="messageType === 'error' ? 'bg-red-900/80 text-red-200 border border-red-700' : 'bg-green-900/80 text-green-200 border border-green-700'">
+            {{ message }}
+        </div>
+
+        <!-- VIEW: LOGIN -->
+        <div v-if="view === 'login'" class="max-w-md mx-auto mt-20 panel shadow-2xl">
+            <h2 class="text-2xl font-bold mb-6 text-center text-slate-800 dark:text-slate-200">ログイン</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="label-sm">メールアドレス</label>
+                    <input v-model="authForm.email" type="email" class="input-base">
+                </div>
+                <div>
+                    <label class="label-sm">パスワード</label>
+                    <input v-model="authForm.password" type="password" class="input-base">
+                </div>
+                <div class="flex gap-4 pt-4">
+                    <button @click="signIn"
+                        class="flex-1 bg-blue-600 hover:bg-blue-500 py-2 rounded font-medium transition shadow-lg shadow-blue-900/50">ログイン</button>
+                    <button @click="signUp"
+                        class="flex-1 bg-slate-700 hover:bg-slate-600 py-2 rounded font-medium transition">新規登録</button>
+                </div>
+            </div>
+            <div v-if="!supabaseConfigured"
+                class="mt-6 p-3 bg-yellow-900/30 border border-yellow-700 rounded text-xs text-yellow-200">
+                コード内の SUPABASE_URL と KEY を設定してください。
+            </div>
+        </div>
+
+        <!-- VIEW: DASHBOARD -->
+        <div v-if="view === 'dashboard'" class="mx-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold">キャラクター一覧</h2>
+                <button @click="createNewCharacter"
+                    class="bg-green-600 hover:bg-green-500 px-4 py-2 rounded shadow flex items-center gap-2 transition font-medium">
+                    + 新規作成
+                </button>
+            </div>
+
+            <div v-if="savedCharacters.length === 0"
+                class="text-center py-20 bg-slate-800 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
+                <p class="text-slate-500 dark:text-slate-400">キャラクターがありません</p>
+            </div>
+
+            <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div v-for="char in savedCharacters" :key="char.id"
+                    class="panel p-5 hover:border-blue-500 hover:shadow-lg transition cursor-pointer group"
+                    @click="editCharacter(char)">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-bold text-lg group-hover:text-blue-400 transition">{{ (char.data &&
+                            char.data.personal && char.data.personal.name) ? char.data.personal.name : '名称未設定' }}</h3>
+                        <span class="text-xs bg-slate-700 px-2 py-1 rounded text-slate-300">PL: {{
+                            (char.data && char.data.personal && char.data.personal.playerName) ?
+                            char.data.personal.playerName : '-' }}</span>
+                    </div>
+                    <div class="text-xs text-slate-500 dark:text-slate-400">
+                        更新: {{ new Date(char.updated_at).toLocaleString() }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: EDIT / BROWSE (MAIN SHEET) -->
+        <div v-if="view === 'edit' || view === 'browse'" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+            <!-- LEFT COLUMN (Main Content) -->
+            <div class="lg:col-span-9 space-y-8 bg-slate-900/50">
+                <fieldset :disabled="isReadOnly" class="space-y-8 border-0 p-0 m-0 min-w-0">
+
+                    <!-- A. 基本情報 -->
+                    <section class="panel relative">
+                        <h3 class="section-title">A. 基本情報</h3>
+                        <div class="flex flex-col md:flex-row gap-6">
+                            <!-- Image Upload -->
+                            <div class="w-full md:w-48 flex-shrink-0">
+                                <div class="aspect-[3/4] bg-slate-900 rounded border-2 border-dashed border-slate-600 flex items-center justify-center relative overflow-hidden group hover:border-blue-500 transition cursor-pointer"
+                                    @click="$refs.fileInput.click()">
+                                    <img v-if="character.personal.image" :src="character.personal.image"
+                                        class="w-full h-full object-contain">
+                                    <span v-else class="text-slate-500 text-sm p-4 text-center">クリックで画像選択</span>
+                                    <div
+                                        class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
+                                        <span class="text-white text-xs">変更</span>
+                                    </div>
+                                </div>
+                                <input type="file" ref="fileInput" class="hidden" accept="image/*"
+                                    @change="uploadImage">
+                            </div>
+
+                            <!-- Inputs -->
+                            <div class="flex-grow grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div class="col-span-2 md:col-span-2">
+                                    <label class="label-sm">名前</label>
+                                    <input v-model="character.personal.name" class="input-base text-lg font-bold">
+                                </div>
+                                <div class="col-span-2 md:col-span-2">
+                                    <label class="label-sm">PL名</label>
+                                    <input v-model="character.personal.playerName" class="input-base">
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="label-sm">地球での氏名</label>
+                                    <input v-model="character.personal.realName" class="input-base">
+                                </div>
+                                <div>
+                                    <label class="label-sm">年齢</label>
+                                    <input v-model="character.personal.age" class="input-base">
+                                </div>
+                                <div>
+                                    <label class="label-sm">性別</label>
+                                    <input v-model="character.personal.gender" class="input-base">
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="label-sm">死因</label>
+                                    <input v-model="character.personal.causeOfDeath" class="input-base">
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="label-sm">出身地域</label>
+                                    <input v-model="character.personal.homeland" class="input-base">
+                                </div>
+                                <div class="col-span-full">
+                                    <label class="label-sm">外見の特徴</label>
+                                    <textarea v-model="character.personal.features" class="input-base h-20"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- B. カルマ -->
+                    <section class="panel">
+                        <h3 class="section-title">B. カルマ</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
+                            <div>
+                                <label class="label-sm">初期カルマ</label>
+                                <input v-model.number="character.karma.basic" type="number"
+                                    class="input-base text-center">
+                            </div>
+                            <div>
+                                <label class="label-sm">内包カルマ</label>
+                                <div class="text-xl font-bold text-blue-400 py-1">{{ innerKarma }}</div>
+                            </div>
+                            <div>
+                                <label class="label-sm">使用カルマ</label>
+                                <div class="text-xl font-bold text-red-400 py-1">{{ usedKarma }}</div>
+                            </div>
+                            <div>
+                                <label class="label-sm">潜在カルマ</label>
+                                <div class="text-xl font-bold text-green-400 py-1">{{ potentialKarma }}</div>
+                            </div>
+                            <div>
+                                <label class="label-sm">限界強度</label>
+                                <div class="text-xl font-bold text-purple-400 py-1">{{ limitStrength }}</div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- C. チート (Matrix) -->
+                    <section class="panel overflow-x-auto">
+                        <h3 class="section-title">C. チート</h3>
+                        <div class="mb-4 space-y-3">
+                            <div>
+                                <label class="label-sm">チート名</label>
+                                <input v-model="character.cheatsName" class="input-base max-w-md">
+                            </div>
+                            <div class="flex gap-4">
+                                <div class="w-32 flex-shrink-0">
+                                    <label class="label-sm">固有能力</label>
+                                    <input v-model="character.intrinsicAbility" class="input-base text-center">
+                                </div>
+                                <div class="flex-grow">
+                                    <label class="label-sm">効果</label>
+                                    <input v-model="character.intrinsicEffect" class="input-base" placeholder="効果テキスト">
+                                </div>
+                            </div>
+                        </div>
+                        <table class="w-full text-sm border-collapse">
+                            <thead>
+                                <tr class="border-b border-slate-600">
+                                    <th class="w-32">汎用効果</th>
+                                    <th class="w-10 text-center">有無</th>
+                                    <th class="w-24">使用</th>
+                                    <th class="w-24">強度</th>
+                                    <th>選択可能</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(cheat, idx) in character.cheats" :key="idx"
+                                    class="border-b border-slate-200 dark:border-slate-700/50 hover:bg-slate-700/30">
+                                    <td class="py-2 text-slate-300">{{ cheat.type }}</td>
+                                    <td class="text-center"><input type="checkbox" v-model="cheat.has"></td>
+                                    <td><input v-model="cheat.use" class="table-input"></td>
+                                    <td><input v-model="cheat.strength" class="table-input"></td>
+                                    <td><input v-model="cheat.available" class="table-input"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </section>
+
+                    <!-- D & E. 能力値 -->
+                    <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- D. Main Stats -->
+                        <div class="panel">
+                            <h3 class="section-title">D. 能力値 (通常)</h3>
+                            <div
+                                class="grid grid-cols-7 gap-2 text-center text-xs text-slate-500 dark:text-slate-400 mb-2">
+                                <div class="col-span-2 text-left pl-2">項目</div>
+                                <div>現在</div>
+                                <div>成功率</div>
+                                <div>種族値</div>
+                                <div>成長</div>
+                                <div>修正</div>
+                            </div>
+                            <div v-for="(stat, key) in character.stats" :key="key"
+                                class="grid grid-cols-7 gap-2 mb-3 items-center">
+                                <div
+                                    class="col-span-2 text-left pl-2 font-bold uppercase text-slate-700 dark:text-slate-200">
+                                    {{
+                                    statLabel(key)
+                                    }}</div>
+                                <!-- Calculated Current Value -->
+                                <div
+                                    class="font-bold text-lg bg-slate-100 border border-blue-200 rounded flex items-center justify-center text-slate-800 dark:bg-slate-900 dark:border-blue-900/50 dark:text-white">
+                                    {{ getStat(key) }}
+                                </div>
+                                <div class="font-bold text-lg text-blue-400">{{ successRate(getStat(key)) }}%</div>
+                                <input v-model.number="stat.race" type="number" class="input-base text-center">
+                                <input v-model.number="stat.growth" type="number"
+                                    class="input-base text-center bg-slate-100 border-slate-300 dark:bg-slate-900/50 dark:border-slate-600">
+                                <input v-model.number="stat.mod" type="number" class="input-base text-center">
+                            </div>
+                            <div class="text-right text-xs text-slate-500 mt-2">※現在値 = 種族値 + 成長 + 修正</div>
+                        </div>
+
+                        <!-- E. Variant Stats -->
+                        <div class="panel">
+                            <h3 class="section-title">E. 変異時能力</h3>
+                            <div
+                                class="grid grid-cols-6 gap-2 text-center text-xs text-slate-500 dark:text-slate-400 mb-2">
+                                <div class="col-span-2 text-left pl-2">項目</div>
+                                <div>現在</div>
+                                <div>成功率</div>
+                                <div>-</div>
+                                <div>成長</div>
+                            </div>
+                            <div v-for="(stat, key) in character.variantStats" :key="key"
+                                class="grid grid-cols-6 gap-2 mb-3 items-center">
+                                <div
+                                    class="col-span-2 text-left pl-2 font-bold uppercase text-slate-700 dark:text-slate-200">
+                                    {{
+                                    statLabel(key)
+                                    }}</div>
+                                <input v-model.number="stat.current" type="number"
+                                    class="input-base text-center font-bold text-lg bg-red-900/20 border-red-900/50">
+                                <div class="font-bold text-lg text-red-400">{{ successRate(stat.current) }}%</div>
+                                <div class="text-center">-</div>
+                                <div class="text-center text-slate-500 bg-slate-100 dark:bg-slate-900/30 rounded py-1">
+                                    {{
+                                    character.stats[key].growth }}</div>
+                            </div>
+                            <div class="text-right text-xs text-slate-500 mt-2">※成長は通常時と連動</div>
+                        </div>
+                    </section>
+
+                    <!-- F. 副能力値 -->
+                    <section class="panel">
+                        <h3 class="section-title">F. 副能力値</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
+                            <!-- HP -->
+                            <div class="stat-box">
+                                <div class="label-sm">HP</div>
+                                <div class="text-2xl font-bold text-green-400">{{ calcHP }}</div>
+                                <div class="text-xs text-slate-500 mt-1">修正 <input
+                                        v-model.number="character.subStats.hpMod" type="number"
+                                        class="w-12 bg-transparent text-center border-b border-slate-600 text-white">
+                                </div>
+                            </div>
+                            <!-- Armor -->
+                            <div class="stat-box">
+                                <div class="label-sm">装甲値</div>
+                                <div class="text-2xl font-bold text-slate-200">{{ calcArmor }}</div>
+                                <div class="text-xs text-slate-500 mt-1">修正 <input
+                                        v-model.number="character.subStats.armorMod" type="number"
+                                        class="w-12 bg-transparent text-center border-b border-slate-600 text-white">
+                                </div>
+                            </div>
+                            <!-- Troop -->
+                            <div class="stat-box">
+                                <div class="label-sm">部隊値</div>
+                                <div class="text-2xl font-bold text-slate-200">{{ calcTroop }}</div>
+                                <div class="text-xs text-slate-500 mt-1">修正 <input
+                                        v-model.number="character.subStats.troopMod" type="number"
+                                        class="w-12 bg-transparent text-center border-b border-slate-600 text-white">
+                                </div>
+                            </div>
+                            <!-- AP -->
+                            <div class="stat-box bg-slate-700/30">
+                                <div class="label-sm">行動値(AP)</div>
+                                <div class="text-2xl font-bold text-yellow-400">{{ calcAP }}</div>
+                                <div class="text-xs text-slate-500 mt-1">修正 <input
+                                        v-model.number="character.subStats.apMod" type="number"
+                                        class="w-12 bg-transparent text-center border-b border-slate-600 text-white">
+                                </div>
+                            </div>
+                            <!-- Weight Lim -->
+                            <div class="stat-box">
+                                <div class="label-sm">限界重量</div>
+                                <div class="text-xl font-bold text-slate-300">{{ calcWeightLimit }}</div>
+                                <div class="text-xs text-slate-500 mt-1">修正 <input
+                                        v-model.number="character.subStats.weightLimitMod" type="number"
+                                        class="w-12 bg-transparent text-center border-b border-slate-600 text-white">
+                                </div>
+                            </div>
+                            <!-- Carrying -->
+                            <div class="stat-box" :class="calcCarrying > calcWeightLimit ? 'border-red-500' : ''">
+                                <div class="label-sm">所持重量</div>
+                                <div class="text-xl font-bold"
+                                    :class="calcCarrying > calcWeightLimit ? 'text-red-500' : 'text-slate-300'">{{
+                                    calcCarrying }}</div>
+                                <div class="text-xs text-slate-500 mt-1">修正 <input
+                                        v-model.number="character.subStats.carryingMod" type="number"
+                                        class="w-12 bg-transparent text-center border-b border-slate-600 text-white">
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- G. 金銭 & H. 行為タグ -->
+                    <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="panel">
+                            <h3 class="section-title">G. 金銭管理</h3>
+                            <div class="grid grid-cols-2 gap-4 mb-4">
+                                <div><label class="label-sm">職業</label><input v-model="character.money.job"
+                                        class="input-base"></div>
+                                <div><label class="label-sm">生活LV</label><input v-model="character.money.lifestyle"
+                                        class="input-base"></div>
+                                <div><label class="label-sm">生活費</label><input
+                                        v-model.number="character.money.livingCost" type="number" class="input-base">
+                                </div>
+                                <div><label class="label-sm">初期資金</label><input v-model.number="character.money.initial"
+                                        type="number" class="input-base"></div>
+                                <div><label class="label-sm">修正値</label><input
+                                        v-model.number="character.money.expenseMod" type="number" class="input-base">
+                                </div>
+                                <div><label class="label-sm">支出合計</label>
+                                    <div class="text-lg font-bold text-red-400">{{ calcExpenses }}</div>
+                                </div>
+                                <div class="col-span-2 pt-2 border-t border-slate-200 dark:border-slate-700">
+                                    <label class="label-sm">所持金 (初期 - 支出 + 履歴 + セッション)</label>
+                                    <div class="text-2xl font-bold text-yellow-400">{{ calcMoneyBalance }}</div>
+                                </div>
+                            </div>
+                            <!-- Accordion for Money History -->
+                            <div class="border border-slate-300 dark:border-slate-600 rounded">
+                                <div role="button" @click="showMoneyHistory = !showMoneyHistory"
+                                    class="w-full text-left p-2 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white text-xs flex justify-between cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-600 transition select-none">
+                                    <span>収支履歴 (総計: {{ calcMoneyHistoryTotal }})</span> <span>{{ showMoneyHistory ? '▼'
+                                        :
+                                        '▶' }}</span>
+                                </div>
+                                <div v-if="showMoneyHistory" class="p-2 bg-slate-50 dark:bg-slate-900/50 block">
+                                    <div v-for="(hist, idx) in character.money.history" :key="idx"
+                                        class="flex gap-2 mb-1">
+                                        <input v-model="hist.name" placeholder="項目" class="table-input">
+                                        <input v-model.number="hist.amount" type="number" placeholder="金額"
+                                            class="table-input w-24 text-right">
+                                        <button v-if="!isReadOnly" @click="removeRow(character.money.history, idx)"
+                                            class="text-red-500 px-2">×</button>
+                                    </div>
+                                    <button v-if="!isReadOnly"
+                                        @click="character.money.history.push({name:'', amount:0})"
+                                        class="text-xs text-blue-400 mt-1 hover:text-blue-300">+ 追加</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="panel">
+                            <h3 class="section-title">H. 行為タグ</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="label-sm">習熟</label>
+                                    <table class="w-full text-sm border-collapse">
+                                        <tbody>
+                                            <tr>
+                                                <td class="w-16 py-1 text-slate-500 dark:text-slate-400">言語</td>
+                                                <td><textarea v-model="character.tags.proficiencies.language"
+                                                        class="input-base h-14" placeholder="習熟内容" rows="2"></textarea>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="w-16 py-1 text-slate-500 dark:text-slate-400">身体</td>
+                                                <td><textarea v-model="character.tags.proficiencies.body"
+                                                        class="input-base h-14" placeholder="習熟内容" rows="2"></textarea>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="w-16 py-1 text-slate-500 dark:text-slate-400">精神</td>
+                                                <td><textarea v-model="character.tags.proficiencies.mind"
+                                                        class="input-base h-14" placeholder="習熟内容" rows="2"></textarea>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="w-16 py-1 text-slate-500 dark:text-slate-400">感覚</td>
+                                                <td><textarea v-model="character.tags.proficiencies.sense"
+                                                        class="input-base h-14" placeholder="習熟内容" rows="2"></textarea>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="w-16 py-1 text-slate-500 dark:text-slate-400">知性</td>
+                                                <td><textarea v-model="character.tags.proficiencies.intellect"
+                                                        class="input-base h-14" placeholder="習熟内容" rows="2"></textarea>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div>
+                                    <label class="label-sm">有利を得ている行為</label>
+                                    <textarea v-model="character.tags.advantages" class="input-base h-16"></textarea>
+                                </div>
+                                <div>
+                                    <label class="label-sm">不利を得ている行為</label>
+                                    <textarea v-model="character.tags.disadvantages" class="input-base h-16"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- LISTS -->
+                    <section class="space-y-6">
+
+                        <!-- Career Path -->
+                        <div class="panel">
+                            <h3 class="section-title">キャリア</h3>
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr>
+                                        <th>時期</th>
+                                        <th>キャリア名</th>
+                                        <th>種別</th>
+                                        <th class="w-20">使用カルマ</th>
+                                        <th class="w-8"></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                                    <template v-for="(item, idx) in character.careerPaths" :key="idx">
+                                        <tr>
+                                            <td><input v-model="item.period" class="table-input"></td>
+                                            <td><input v-model="item.name" class="table-input"></td>
+                                            <td><input v-model="item.type" class="table-input"></td>
+                                            <td><input v-model.number="item.karma" type="number"
+                                                    class="table-input text-right"></td>
+                                            <td class="text-center"><span class="btn-del"
+                                                    @click="removeRow(character.careerPaths, idx)"
+                                                    v-if="!isReadOnly && idx>0">×</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="5"><input v-model="item.details"
+                                                    class="table-input text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900/30"
+                                                    placeholder="取得スキル・特性・習熟"></td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                            </table>
+                            <div class="btn-add" v-if="!isReadOnly"
+                                @click="addRow(character.careerPaths, {period:'',name:'',type:'',karma:0,details:''})">+
+                                行追加
+                            </div>
+                        </div>
+
+                        <!-- Additional Karma -->
+                        <div class="panel">
+                            <h3 class="section-title">追加仕様カルマ</h3>
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr>
+                                        <th>種別</th>
+                                        <th>スキル名</th>
+                                        <th>使用</th>
+                                        <th class="w-20">カルマ</th>
+                                        <th class="w-8"></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                                    <template v-for="(item, idx) in character.additionalKarma" :key="idx">
+                                        <tr>
+                                            <td><input v-model="item.type" class="table-input"></td>
+                                            <td><input v-model="item.name" class="table-input"></td>
+                                            <td><input v-model="item.use" class="table-input"></td>
+                                            <td><input v-model.number="item.karma" type="number"
+                                                    class="table-input text-right"></td>
+                                            <td class="text-center"><span class="btn-del"
+                                                    @click="removeRow(character.additionalKarma, idx)"
+                                                    v-if="!isReadOnly">×</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="5">
+                                                <div class="grid grid-cols-2 gap-2">
+                                                    <input v-model="item.effect"
+                                                        class="table-input text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900/30"
+                                                        placeholder="効果">
+                                                    <input v-model="item.details"
+                                                        class="table-input text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900/30"
+                                                        placeholder="取得物等">
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                            <div class="btn-add" v-if="!isReadOnly"
+                                @click="addRow(character.additionalKarma, {type:'',name:'',use:'',karma:0,effect:'',details:''})">
+                                + 行追加
+                            </div>
+                        </div>
+
+                        <!-- Skills -->
+                        <div class="panel">
+                            <h3 class="section-title">スキル</h3>
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr>
+                                        <th>名前</th>
+                                        <th>使用</th>
+                                        <th>AP</th>
+                                        <th>射程</th>
+                                        <th>対象</th>
+                                        <th>判定</th>
+                                        <th class="w-8"></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                                    <template v-for="(item, idx) in character.skills" :key="idx">
+                                        <tr>
+                                            <td><input v-model="item.name" class="table-input font-bold"></td>
+                                            <td><input v-model="item.cost" class="table-input"></td>
+                                            <td><input v-model="item.ap" class="table-input w-12 text-center"></td>
+                                            <td><input v-model="item.range" class="table-input"></td>
+                                            <td><input v-model="item.target" class="table-input"></td>
+                                            <td><input v-model="item.check" class="table-input"></td>
+                                            <td class="text-center"><span class="btn-del"
+                                                    @click="removeRow(character.skills, idx)"
+                                                    v-if="!isReadOnly && idx>0">×</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="7"><input v-model="item.effect"
+                                                    class="table-input text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900/30"
+                                                    placeholder="効果"></td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                            <div class="btn-add" v-if="!isReadOnly"
+                                @click="addRow(character.skills, {name:'',cost:'',ap:'',range:'',target:'',check:'',effect:''})">
+                                + 行追加</div>
+                        </div>
+
+                        <!-- Weapons -->
+                        <div class="panel">
+                            <h3 class="section-title">武器</h3>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm min-w-[600px]">
+                                    <thead>
+                                        <tr>
+                                            <th>名前</th>
+                                            <th>部位</th>
+                                            <th>AP</th>
+                                            <th>射程</th>
+                                            <th>対象</th>
+                                            <th>判定</th>
+                                            <th>F値</th>
+                                            <th>C値</th>
+                                            <th>威力</th>
+                                            <th>重量</th>
+                                            <th>価格</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                                        <template v-for="(item, idx) in character.weapons" :key="idx">
+                                            <tr class="bg-transparent">
+                                                <td><input v-model="item.name" class="table-input font-bold"></td>
+                                                <td><input v-model="item.part" class="table-input w-16"></td>
+                                                <td><input v-model.number="item.ap" type="number"
+                                                        class="table-input w-10 text-center"></td>
+                                                <td><input v-model="item.range" class="table-input w-16"></td>
+                                                <td><input v-model="item.target" class="table-input w-16"></td>
+                                                <td><input v-model="item.check" class="table-input w-16"></td>
+                                                <td><input v-model.number="item.fVal" type="number"
+                                                        class="table-input w-10 text-center"></td>
+                                                <td><input v-model.number="item.cVal" type="number"
+                                                        class="table-input w-10 text-center"></td>
+                                                <td><input v-model="item.power" class="table-input w-12"></td>
+                                                <td><input v-model.number="item.weight" type="number"
+                                                        class="table-input w-10 text-center"></td>
+                                                <td><input v-model.number="item.price" type="number"
+                                                        class="table-input w-16 text-right"></td>
+                                                <td class="text-center"><span class="btn-del"
+                                                        @click="removeRow(character.weapons, idx)"
+                                                        :class="{'opacity-0 pointer-events-none': character.weapons.length <= 1}"
+                                                        v-if="!isReadOnly">×</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="12"><input v-model="item.details"
+                                                        class="table-input text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900/30"
+                                                        placeholder="特性・タグ・効果"></td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="btn-add" v-if="!isReadOnly"
+                                @click="addRow(character.weapons, {name:'',part:'',ap:0,range:'',target:'',check:'',fVal:0,cVal:0,power:'',weight:0,price:0,details:''})">
+                                + 行追加</div>
+                        </div>
+
+                        <!-- Armor & Vehicles -->
+                        <div class="space-y-6">
+                            <!-- Armor -->
+                            <div class="panel">
+                                <h3 class="section-title">防具</h3>
+                                <table class="w-full text-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>名前</th>
+                                            <th>装甲</th>
+                                            <th>HP修</th>
+                                            <th>重量</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                                        <template v-for="(item, idx) in character.armors" :key="idx">
+                                            <tr>
+                                                <td><input v-model="item.name" class="table-input font-bold"></td>
+                                                <td><input v-model.number="item.armor" type="number"
+                                                        class="table-input w-12 text-center"></td>
+                                                <td><input v-model.number="item.hpMod" type="number"
+                                                        class="table-input w-12 text-center"></td>
+                                                <td><input v-model.number="item.weight" type="number"
+                                                        class="table-input w-12 text-center"></td>
+                                                <td class="text-center"><span class="btn-del"
+                                                        @click="removeRow(character.armors, idx)"
+                                                        :class="{'opacity-0 pointer-events-none': character.armors.length <= 1}"
+                                                        v-if="!isReadOnly">×</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="5"><input v-model="item.details"
+                                                        class="table-input text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900/30"
+                                                        placeholder="特性・タグ"></td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                                <div class="btn-add" v-if="!isReadOnly"
+                                    @click="addRow(character.armors, {name:'',armor:0,hpMod:0,weight:0,details:''})">+
+                                    行追加
+                                </div>
+                            </div>
+
+                            <!-- Vehicles -->
+                            <div class="panel overflow-x-auto">
+                                <h3 class="section-title">乗り物/兵器</h3>
+                                <table class="w-full text-sm min-w-[600px]">
+                                    <thead>
+                                        <tr>
+                                            <th>名前</th>
+                                            <th>AP</th>
+                                            <th>射程</th>
+                                            <th>対象</th>
+                                            <th>C値</th>
+                                            <th>F値</th>
+                                            <th>判定</th>
+                                            <th>装甲</th>
+                                            <th>威力</th>
+                                            <th>装備</th>
+                                            <th>価格</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                                        <template v-for="(item, idx) in character.vehicles" :key="idx">
+                                            <tr class="bg-transparent">
+                                                <td><input v-model="item.name" class="table-input font-bold"></td>
+                                                <td><input v-model.number="item.ap" type="number"
+                                                        class="table-input w-10 text-center"></td>
+                                                <td><input v-model="item.range" class="table-input w-12"></td>
+                                                <td><input v-model="item.target" class="table-input w-12"></td>
+                                                <td><input v-model.number="item.cVal" type="number"
+                                                        class="table-input w-10 text-center"></td>
+                                                <td><input v-model.number="item.fVal" type="number"
+                                                        class="table-input w-10 text-center"></td>
+                                                <td><input v-model="item.check" class="table-input w-12"></td>
+                                                <td><input v-model.number="item.armor" type="number"
+                                                        class="table-input w-10 text-center"></td>
+                                                <td><input v-model="item.power" class="table-input w-12"></td>
+                                                <td><input v-model="item.condition" class="table-input w-12"></td>
+                                                <td><input v-model.number="item.price" type="number"
+                                                        class="table-input w-16 text-right"></td>
+                                                <td class="text-center"><span class="btn-del"
+                                                        @click="removeRow(character.vehicles, idx)"
+                                                        :class="{'opacity-0 pointer-events-none': character.vehicles.length <= 1}"
+                                                        v-if="!isReadOnly">×</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="12"><input v-model="item.details"
+                                                        class="table-input text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900/30"
+                                                        placeholder="特性・タグ・効果"></td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                                <div class="btn-add" v-if="!isReadOnly"
+                                    @click="addRow(character.vehicles, {name:'',ap:0,range:'',target:'',cVal:0,fVal:0,check:'',armor:0,power:'',condition:'',price:0,details:''})">
+                                    +
+                                    行追加</div>
+                            </div>
+                        </div>
+
+                        <!-- Items -->
+                        <div class="panel">
+                            <h3 class="section-title">道具</h3>
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr>
+                                        <th>名前</th>
+                                        <th>個数</th>
+                                        <th>重量</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                                    <template v-for="(item, idx) in character.items" :key="idx">
+                                        <tr>
+                                            <td><input v-model="item.name" class="table-input"></td>
+                                            <td><input v-model.number="item.count" type="number"
+                                                    class="table-input w-12 text-center"></td>
+                                            <td><input v-model.number="item.weight" type="number"
+                                                    class="table-input w-12 text-center"></td>
+                                            <td class="text-center"><span class="btn-del"
+                                                    @click="removeRow(character.items, idx)"
+                                                    :class="{'opacity-0 pointer-events-none': character.items.length <= 1}"
+                                                    v-if="!isReadOnly">×</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="4"><input v-model="item.details"
+                                                    class="table-input text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900/30"
+                                                    placeholder="効果"></td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                            <div class="btn-add" @click="addRow(character.items, {name:'',count:1,weight:0,details:''})"
+                                v-if="!isReadOnly">+
+                                行追加</div>
+                        </div>
+
+                        <!-- Territory (Collapsible) -->
+                        <div role="button" @click="showTerritory = !showTerritory"
+                            class="w-full py-3 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 rounded font-bold transition flex justify-between px-6 cursor-pointer select-none text-slate-800 dark:text-white">
+                            <span>領地経営シート</span>
+                            <span>{{ showTerritory ? '▲ 閉じる' : '▼ 展開' }}</span>
+                        </div>
+                        <div v-if="showTerritory" class="panel space-y-6">
+                            <!-- Events Table -->
+                            <div>
+                                <h4 class="font-bold text-slate-500 dark:text-slate-400 mb-2">イベント表</h4>
+                                <table class="w-full text-sm border border-slate-600 text-center">
+                                    <thead>
+                                        <tr class="bg-slate-200 text-slate-800 dark:bg-slate-900 dark:text-slate-200">
+                                            <th class="w-20">出目10</th>
+                                            <th class="w-20">出目20</th>
+                                            <th>イベント名</th>
+                                            <th>効果</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="(ev, idx) in character.territory.events" :key="idx"
+                                            class="border-t border-slate-200 dark:border-slate-700">
+                                            <!-- D10 Column: Only show for first 10 rows -->
+                                            <td class="text-slate-500 bg-slate-100 dark:bg-slate-900/30">
+                                                <span v-if="idx < 10">{{ idx*10 + 1 }}~{{ (idx+1)*10 }}</span>
+                                            </td>
+                                            <!-- D20 Column: Show for all 20 rows -->
+                                            <td
+                                                class="text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900/30">
+                                                {{ idx*5 + 1 }}~{{ (idx+1)*5 }}
+                                            </td>
+                                            <td><input v-model="ev.name" class="table-input" placeholder="イベント名"></td>
+                                            <td><input v-model="ev.effect" class="table-input" placeholder="効果"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+
+
+                            <!-- Facilities -->
+                            <div>
+                                <h4 class="font-bold text-slate-500 dark:text-slate-400 mb-2">施設</h4>
+                                <table class="w-full text-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>施設名</th>
+                                            <th class="w-16">数</th>
+                                            <th>種別</th>
+                                            <th class="w-20">単価</th>
+                                            <th class="w-20">小計</th>
+                                            <th>効果</th>
+                                            <th class="w-8"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="(fac, idx) in character.territory.facilities" :key="idx"
+                                            class="border-b border-slate-200 dark:border-slate-700">
+                                            <td><input v-model="fac.name" class="table-input"></td>
+                                            <td><input v-model.number="fac.count" type="number"
+                                                    class="table-input text-center"></td>
+                                            <td><input v-model="fac.type" class="table-input"></td>
+                                            <td><input v-model.number="fac.price" type="number"
+                                                    class="table-input text-right"></td>
+                                            <td class="text-right pr-2 text-slate-300">{{ (fac.count || 0) * (fac.price
+                                                ||
+                                                0) }}</td>
+                                            <td><input v-model="fac.effect" class="table-input"></td>
+                                            <td class="text-center"><span class="btn-del"
+                                                    @click="removeRow(character.territory.facilities, idx)"
+                                                    :class="{'opacity-0 pointer-events-none': character.territory.facilities.length <= 1}"
+                                                    v-if="!isReadOnly">×</span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <td colspan="4" class="text-right pr-4 font-bold">収入総計</td>
+                                            <td class="text-right pr-2 font-bold text-yellow-400">{{ calcTerritoryIncome
+                                                }}
+                                            </td>
+                                            <td colspan="2"></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                                <div class="btn-add"
+                                    @click="addRow(character.territory.facilities, {name:'',count:0,price:0})"
+                                    v-if="!isReadOnly">+ 施設追加
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Free Note (Outside Territory) -->
+                        <div class="border border-slate-300 dark:border-slate-600 rounded">
+                            <div role="button" @click="showFreeNote = !showFreeNote"
+                                class="w-full text-left p-2 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white text-xs flex justify-between font-bold cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-600 transition select-none">
+                                <span>自由記入欄</span> <span>{{ showFreeNote ? '▼' : '▶' }}</span>
+                            </div>
+                            <div v-if="showFreeNote" class="p-2 bg-slate-50 dark:bg-slate-900/50">
+                                <textarea v-model="character.freeNote"
+                                    class="w-full h-32 bg-transparent text-slate-800 dark:text-white text-sm p-2 outline-none resize-y"
+                                    placeholder="自由に記述してください"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Session History (Outside Territory) -->
+                        <div class="border border-slate-300 dark:border-slate-600 rounded">
+                            <div role="button" @click="showSessionHistory = !showSessionHistory"
+                                class="w-full text-left p-2 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white text-xs flex justify-between font-bold cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-600 transition select-none">
+                                <span>セッション履歴 (カルマ合計: {{ sessionKarma }})</span> <span>{{ showSessionHistory ? '▼' : '▶'
+                                    }}</span>
+                            </div>
+                            <div v-if="showSessionHistory"
+                                class="p-2 bg-slate-100 dark:bg-slate-900/50 overflow-x-auto">
+                                <table class="w-full text-xs min-w-[700px]">
+                                    <thead>
+                                        <tr class="text-slate-500 dark:text-slate-400 text-left">
+                                            <th>日時</th>
+                                            <th>シナリオ</th>
+                                            <th>参加者</th>
+                                            <th class="w-16">カルマ</th>
+                                            <th class="w-16">報酬</th>
+                                            <th class="w-16">余暇</th>
+                                            <th>備考</th>
+                                            <th class="w-8"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                                        <tr v-for="(se, idx) in character.sessionHistory" :key="idx">
+                                            <td><input v-model="se.date" class="table-input"></td>
+                                            <td><input v-model="se.scenario" class="table-input"></td>
+                                            <td><input v-model="se.members" class="table-input"></td>
+                                            <td><input v-model.number="se.karma" type="number"
+                                                    class="table-input text-right"></td>
+                                            <td><input v-model.number="se.reward" type="number"
+                                                    class="table-input text-right"></td>
+                                            <td><input v-model.number="se.downtime" type="number"
+                                                    class="table-input text-right"></td>
+                                            <td><input v-model="se.remarks" class="table-input"></td>
+                                            <td class="text-center"><span class="btn-del" @click="removeSession(idx)"
+                                                    v-if="!isReadOnly">×</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <div class="btn-add"
+                                    @click="addRow(character.sessionHistory, {date:'',scenario:'',members:'',karma:0,reward:0,downtime:0,remarks:''})"
+                                    v-if="!isReadOnly">
+                                    + 履歴追加</div>
+                            </div>
+                        </div>
+
+                </fieldset>
+                </section>
+
+            </div>
+
+            <!-- RIGHT COLUMN (Sidebar / Actions) -->
+            <!-- RIGHT COLUMN (Sidebar / Actions) -->
+            <div class="lg:col-span-3 space-y-6 sticky top-4 z-50 relative">
+                <div v-if="!isReadOnly" class="panel p-4 shadow-xl">
+                    <h4 class="font-bold text-center mb-4 text-slate-500 dark:text-slate-400">アクション</h4>
+                    <button type="button" @click="saveCharacter"
+                        class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-lg font-bold shadow-lg shadow-blue-900/30 transition mb-2">
+                        保存する
+                    </button>
+                    <button type="button" @click="saveAndExit"
+                        class="w-full bg-slate-200 hover:bg-slate-300 text-slate-800 dark:bg-slate-600 dark:hover:bg-slate-500 dark:text-white py-2 rounded text-sm transition mb-2">
+                        保存して一覧に戻る
+                    </button>
+                    <button type="button" @click="view = 'dashboard'"
+                        class="w-full bg-slate-200 hover:bg-slate-300 text-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-white py-2 rounded text-sm transition">
+                        保存せず一覧に戻る
+                    </button>
+                    <!-- Deletion Area -->
+                    <div v-if="character.id" class="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700">
+                        <div class="flex justify-center gap-2 mb-2">
+                            <div v-for="(c, i) in deleteChecks" :key="i"
+                                class="w-6 h-6 border cursor-pointer transition-colors duration-200"
+                                :class="c ? 'bg-red-500 border-red-500' : 'bg-slate-200 dark:bg-slate-700 border-slate-300 dark:border-slate-500'"
+                                @click="deleteChecks[i] = !deleteChecks[i]">
+                            </div>
+                        </div>
+                        <button type="button" @click="deleteCharacter" :disabled="!canDelete"
+                            class="w-full py-2 rounded font-bold transition text-sm flex items-center justify-center gap-2"
+                            :class="canDelete ? 'bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-900/30' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed border border-slate-300 dark:border-slate-700'">
+                            <span v-if="!canDelete">削除 (ロック中)</span>
+                            <span v-else>削除する</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Read Only Actions -->
+                <div v-else class="panel p-4 shadow-xl">
+                    <h4 class="font-bold text-center mb-4 text-slate-500 dark:text-slate-400">閲覧モード</h4>
+                    <button v-if="isOwner" type="button" @click="view = 'edit'"
+                        class="w-full bg-green-600 hover:bg-green-500 py-3 rounded-lg font-bold shadow-lg shadow-green-900/30 transition mb-2">
+                        編集する
+                    </button>
+                    <!-- FALLBACK: Force Edit for any logged in user (if owner check fails) -->
+                    <button v-if="user && !isOwner" type="button"
+                        @click="character.user_id = user.id; view = 'edit'; showMessage('所有権を取得しました')"
+                        class="w-full bg-orange-600 hover:bg-orange-500 py-2 rounded font-bold shadow-lg transition mb-2 text-xs">
+                        強制編集 (Data Rescue)
+                    </button>
+
+                    <button v-if="user" type="button" @click="view = 'dashboard'"
+                        class="w-full bg-slate-200 hover:bg-slate-300 text-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-white py-2 rounded text-sm transition">
+                        一覧に戻る
+                    </button>
+                    <button v-if="!user" type="button" @click="view = 'login'"
+                        class="w-full bg-slate-200 hover:bg-slate-300 text-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-white py-2 rounded text-sm transition">
+                        ログイン画面へ
+                    </button>
+                </div>
+
+                <!-- Toggle Browse Button in Edit Mode -->
+                <div v-if="!isReadOnly" class="panel p-4 shadow-xl">
+                    <button type="button" @click="view = 'browse'"
+                        class="w-full bg-indigo-600 hover:bg-indigo-500 py-2 rounded text-sm font-bold shadow-lg shadow-indigo-900/30 transition">
+                        プレビュー (閲覧モード)
+                    </button>
+                    <div class="mt-4 text-xs text-slate-500 dark:text-slate-400 text-center break-all">
+                        共有用URL:<br>
+                        {{ shareUrl }}
+                    </div>
+                </div>
+
+                <!-- Quick Calc Preview (Sidebar) -->
+                <!-- Quick Calc Preview (Sidebar) -->
+                <div class="panel p-4">
+                    <h4 class="font-bold text-xs text-slate-500 dark:text-slate-400 mb-2 uppercase">クイックビュー</h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between"><span>基本カルマ</span> <span
+                                class="text-slate-800 dark:text-white">{{
+                                character.karma.basic
+                                }}</span></div>
+                        <div class="flex justify-between"><span>潜在カルマ</span> <span
+                                class="text-green-600 dark:text-green-400 font-bold">{{
+                                potentialKarma }}</span></div>
+                        <hr class="border-slate-200 dark:border-slate-700">
+                        <div class="flex justify-between"><span>HP</span> <span
+                                class="text-green-600 dark:text-green-400 font-bold">{{
+                                calcHP
+                                }}</span></div>
+                        <div class="flex justify-between"><span>AP</span> <span
+                                class="text-yellow-600 dark:text-yellow-400 font-bold">{{
+                                calcAP
+                                }}</span></div>
+                        <div class="flex justify-between"><span>装甲</span> <span
+                                class="text-slate-700 dark:text-slate-200 font-bold">{{
+                                calcArmor
+                                }}</span></div>
+                    </div>
+                </div>
+
+                <!-- Right Info Column Removed (Duplicate) -->
+
+
+            </div>
+        </div>
+    </div>
+
+
+
+    </div>
+    <script>
+        window.onerror = function (msg, url, line, col, error) {
+            console.error("Error: " + msg + "\nLine: " + line);
+            return false;
+        };
+
+        if (typeof Vue === 'undefined') {
+            alert('CRITICAL: VueJS did not load. Check Internet connection or CDN.');
+        } else {
+            console.log('Vue loaded');
+        }
+
+        const { createApp } = Vue
+
+        // ▼▼▼ 設定エリア ▼▼▼
+        const SUPABASE_URL = 'https://bsnleuwcssvnmggzqnrt.supabase.co'
+        const SUPABASE_ANON_KEY = 'sb_publishable_qTPLBZoQbDNkdbCgYaLv2g_xsDIf47T'
+        // ▲▲▲ 設定エリア ▲▲▲
+
+        const defaultCharacter = {
+            id: null,
+            user_id: '',
+            personal: { name: '', playerName: '', realName: '', age: '', gender: '', causeOfDeath: '', features: '', homeland: '', image: null },
+            karma: { basic: 0, history: 0 },
+            cheatsName: '',
+            intrinsicAbility: '',
+            intrinsicEffect: '',
+            cheats: [
+                { type: '直接攻撃', has: false, use: '', strength: '', available: '' },
+                { type: '回復', has: false, use: '', strength: '', available: '' },
+                { type: 'BS付与', has: false, use: '', strength: '', available: '' },
+                { type: 'BS解除', has: false, use: '', strength: '', available: '' },
+                { type: '保護', has: false, use: '', strength: '', available: '' },
+                { type: '攻撃強化', has: false, use: '', strength: '', available: '' },
+                { type: '回復強化', has: false, use: '', strength: '', available: '' },
+                { type: '保護強化', has: false, use: '', strength: '', available: '' },
+                { type: '射程変更', has: false, use: '', strength: '', available: '' },
+                { type: '対象変更', has: false, use: '', strength: '', available: '' },
+            ],
+            stats: {
+                body: { current: 0, race: 0, growth: 0, mod: 0 },
+                mind: { current: 0, race: 0, growth: 0, mod: 0 },
+                sense: { current: 0, race: 0, growth: 0, mod: 0 },
+                intellect: { current: 0, race: 0, growth: 0, mod: 0 }
+            },
+            variantStats: {
+                body: { current: 0 }, mind: { current: 0 },
+                sense: { current: 0 }, intellect: { current: 0 }
+            },
+            subStats: { hpMod: 0, armorMod: 0, troopMod: 0, weightLimitMod: 0, carryingMod: 0, apMod: 0 },
+            money: { job: '', lifestyle: '', livingCost: 0, initial: 0, expenseMod: 0, history: [] },
+            tags: { proficiencies: { language: '', body: '', mind: '', sense: '', intellect: '' }, advantages: '', disadvantages: '' },
+
+            careerPaths: Array(5).fill().map(() => ({ period: '', name: '', type: '', karma: 0, details: '' })),
+            additionalKarma: Array(3).fill().map(() => ({ type: '', name: '', use: '', karma: 0, effect: '', details: '' })),
+
+            skills: Array(5).fill().map(() => ({ name: '', cost: '', ap: '', range: '', target: '', check: '', effect: '' })),
+            weapons: Array(5).fill().map(() => ({ name: '', part: '', ap: 0, range: '', target: '', check: '', fVal: 0, cVal: 0, power: '', weight: 0, price: 0, details: '' })),
+            armors: Array(5).fill().map(() => ({ name: '', armor: 0, hpMod: 0, weight: 0, details: '' })),
+            vehicles: Array(1).fill().map(() => ({ name: '', ap: 0, range: '', target: '', cVal: 0, fVal: 0, check: '', armor: 0, power: '', condition: '', price: 0, details: '' })),
+            items: Array(5).fill().map(() => ({ name: '', count: 1, weight: 0, details: '' })),
+
+            territory: {
+                facilities: Array(10).fill().map(() => ({ name: '', count: 0, type: '', price: 0, effect: '' })),
+                events: Array(20).fill().map(() => ({ name: '', effect: '' }))
+            },
+            freeNote: '',
+            sessionHistory: []
+        }
+
+        const app = createApp({
+            data() {
+                return {
+                    supabase: null,
+                    supabaseConfigured: false,
+                    user: null,
+                    view: 'login',
+                    message: '',
+                    messageType: 'info',
+                    showMoneyHistory: false,
+                    showTerritory: false,
+                    showFreeNote: false,
+                    showSessionHistory: false,
+                    deleteChecks: [false, false, false],
+
+                    authForm: { email: '', password: '' },
+                    character: JSON.parse(JSON.stringify(defaultCharacter)),
+                    savedCharacters: [],
+                    isDark: true
+                }
+            },
+            computed: {
+                // KARMA
+                sessionKarma() { return (this.character.sessionHistory || []).reduce((a, b) => a + (b.karma || 0), 0) },
+                innerKarma() { return (this.character.karma.basic || 0) + (this.character.karma.history || 0) + this.sessionKarma },
+                usedKarma() {
+                    let sum = 0
+                    // Stats Growth
+                    Object.values(this.character.stats).forEach(s => sum += (s.growth || 0))
+                    // Career Path
+                    this.character.careerPaths.forEach(c => sum += (c.karma || 0))
+                    // Additional Karma
+                    if (this.character.additionalKarma) {
+                        this.character.additionalKarma.forEach(k => sum += (k.karma || 0))
+                    }
+                    return sum
+                },
+                potentialKarma() { return this.innerKarma - this.usedKarma },
+                limitStrength() { return Math.ceil(this.potentialKarma / 5) },
+
+                // SUB STATS
+                calcHP() {
+                    const base = (this.getStat('body') + this.getStat('mind')) * 3
+                    // Weapon HP mods
+                    const armorHp = this.character.armors.reduce((a, b) => a + (b.hpMod || 0), 0)
+                    return base + armorHp + (this.character.subStats.hpMod || 0)
+                },
+                calcArmor() {
+                    const armors = this.character.armors.reduce((a, b) => a + (b.armor || 0), 0)
+                    const vehicles = (this.character.vehicles || []).reduce((a, b) => a + (b.armor || 0), 0)
+                    return armors + vehicles + (this.character.subStats.armorMod || 0)
+                },
+                calcTroop() {
+                    // Logic for followers not fully in default array but assuming user adds them
+                    return (this.character.subStats.troopMod || 0)
+                },
+                calcWeightLimit() {
+                    return (this.getStat('body') * 2) + (this.character.subStats.weightLimitMod || 0)
+                },
+                calcCarrying() {
+                    const wps = this.character.weapons.reduce((a, b) => a + (b.weight || 0), 0)
+                    const ams = this.character.armors.reduce((a, b) => a + (b.weight || 0), 0)
+                    const its = this.character.items.reduce((a, b) => a + ((b.weight || 0) * (b.count || 1)), 0)
+                    return wps + ams + its + (this.character.subStats.carryingMod || 0)
+                },
+                calcAP() {
+                    const sense = this.getStat('sense')
+                    const intel = this.getStat('intellect')
+                    const base = sense + intel + (this.character.subStats.apMod || 0)
+
+                    // Penalty
+                    const penalty = Math.max(0, this.calcCarrying - this.calcWeightLimit)
+                    return base - penalty
+                },
+
+                // MONEY
+                calcExpenses() {
+                    return (this.character.money.livingCost || 0) + (this.character.money.expenseMod || 0)
+                },
+                calcMoneyHistoryTotal() {
+                    return (this.character.money.history || []).reduce((a, b) => a + (b.amount || 0), 0)
+                },
+                calcSessionMoney() {
+                    return (this.character.sessionHistory || []).reduce((a, b) => a + (b.reward || 0) + (b.downtime || 0), 0)
+                },
+                calcMoneyBalance() {
+                    const initial = this.character.money.initial || 0
+                    return initial - this.calcExpenses + this.calcMoneyHistoryTotal + this.calcSessionMoney
+                },
+
+                // TERRITORY
+                calcTerritoryIncome() {
+                    return this.character.territory.facilities.reduce((a, b) => a + ((b.count || 0) * (b.price || 0)), 0)
+                },
+                canDelete() {
+                    return this.deleteChecks.every(c => c === true)
+                },
+                isOwner() {
+                    return this.user && this.character.user_id === this.user.id
+                },
+                isReadOnly() {
+                    return this.view === 'browse' || !this.isOwner
+                },
+                shareUrl() {
+                    return window.location.origin + window.location.pathname + '?id=' + this.character.id
+                }
+            },
+            watch: {
+                user: {
+                    immediate: true,
+                    handler(newVal) {
+                        // Update user_id if we have a character but no owner (Fix Permissions automatically)
+                        if (newVal && this.character) {
+                            console.log('User Watcher: Checking ownership...');
+                            if (!this.character.user_id) {
+                                console.log('User Watcher: Adopting legacy/orphan data.');
+                                this.character.user_id = newVal.id;
+                                if (this.view === 'browse') this.view = 'edit';
+                            }
+                        }
+                    }
+                }
+            },
+            mounted() {
+                // Check LocalStorage or System Preference
+                const saved = localStorage.getItem('theme')
+                if (saved) {
+                    this.isDark = saved === 'dark'
+                } else {
+                    this.isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+                }
+                this.applyTheme()
+
+                this.initSupabase()
+            },
+            methods: {
+                initSupabase() {
+                    if (SUPABASE_URL.includes('YOUR_')) return
+                    this.supabaseConfigured = true
+                    try {
+                        this.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+                        this.supabase.auth.getSession().then(({ data: { session } }) => {
+                            if (session) {
+                                this.user = session.user
+                                this.view = 'dashboard'
+                                this.loadCharacters()
+                            }
+
+                            // URL check - Perform AFTER auth state is known
+                            const params = new URLSearchParams(window.location.search)
+                            const id = params.get('id')
+                            if (id) {
+                                this.loadCharacterById(id)
+                            }
+                        })
+                        this.supabase.auth.onAuthStateChange((_e, session) => {
+                            this.user = session ? session.user : null
+                            // Only redirect to login if not viewing a public shared sheet
+                            const params = new URLSearchParams(window.location.search)
+                            if (!this.user && !params.get('id')) {
+                                this.view = 'login'
+                            }
+                        })
+                    } catch (e) {
+                        console.error(e)
+                    }
+                },
+                showMessage(text, type = 'info') {
+                    this.message = text; this.messageType = type;
+                    setTimeout(() => this.message = '', 4000)
+                },
+                async signIn() {
+                    const { error } = await this.supabase.auth.signInWithPassword(this.authForm)
+                    if (error) {
+                        this.showMessage(error.message, 'error')
+                    } else {
+                        // Force navigation to dashboard on success
+                        this.view = 'dashboard'
+                        this.loadCharacters()
+                    }
+                },
+                async signUp() {
+                    const { error } = await this.supabase.auth.signUp(this.authForm)
+                    if (error) this.showMessage(error.message, 'error')
+                    else this.showMessage('登録完了。ログインしてください')
+                },
+                async signOut() { await this.supabase.auth.signOut() },
+
+                // View Helpers
+                toggleTheme() {
+                    this.isDark = !this.isDark
+                    this.applyTheme()
+                },
+                applyTheme() {
+                    if (this.isDark) {
+                        document.documentElement.classList.add('dark')
+                        localStorage.setItem('theme', 'dark')
+                    } else {
+                        document.documentElement.classList.remove('dark')
+                        localStorage.setItem('theme', 'light')
+                    }
+                },
+                statLabel(key) {
+                    const map = { body: '身体', mind: '精神', sense: '感覚', intellect: '知性' }
+                    return map[key] || key
+                },
+                getStat(key) {
+                    const s = this.character.stats[key]
+                    return (s.race || 0) + (s.growth || 0) + (s.mod || 0)
+                },
+                successRate(val) { return Math.min(99, (val || 0) * 5) },
+                addRow(list, template) { list.push(JSON.parse(JSON.stringify(template))) },
+                removeRow(list, idx) { list.splice(idx, 1) },
+                removeSession(idx) {
+                    if (confirm('本当に削除しますか？')) {
+                        this.character.sessionHistory.splice(idx, 1)
+                    }
+                },
+
+                // File Upload
+                async uploadImage(event) {
+                    const file = event.target.files[0]
+                    if (!file || !this.user) return
+
+                    const fileName = `${this.user.id}/${Date.now()}_${file.name}`
+                    const { data, error } = await this.supabase.storage
+                        .from('images') // Spec says "Storage bucket", assuming 'images'
+                        .upload(fileName, file)
+
+                    if (error) {
+                        this.showMessage('アップロード失敗: ' + error.message, 'error')
+                    } else {
+                        // Get Public URL
+                        const { data: { publicUrl } } = this.supabase.storage.from('images').getPublicUrl(fileName)
+                        this.character.personal.image = publicUrl
+                        this.showMessage('画像アップロード完了')
+                    }
+                },
+
+                // CRUD
+                createNewCharacter() {
+                    this.deleteChecks = [false, false, false]
+                    this.character = JSON.parse(JSON.stringify(defaultCharacter))
+                    if (this.user) {
+                        this.character.user_id = this.user.id
+                    }
+                    this.view = 'edit'
+                },
+                editCharacter(saved) {
+                    try {
+                        this.deleteChecks = [false, false, false]
+                        const merged = { ...JSON.parse(JSON.stringify(defaultCharacter)), ...saved.data }
+                        merged.personal = { ...defaultCharacter.personal, ...(saved.data.personal || {}) }
+                        // Ensure stats are merged deeply enough to capture 'mod' if missing
+                        merged.stats = {
+                            body: { ...defaultCharacter.stats.body, ...(saved.data.stats?.body || {}) },
+                            mind: { ...defaultCharacter.stats.mind, ...(saved.data.stats?.mind || {}) },
+                            sense: { ...defaultCharacter.stats.sense, ...(saved.data.stats?.sense || {}) },
+                            intellect: { ...defaultCharacter.stats.intellect, ...(saved.data.stats?.intellect || {}) }
+                        }
+                        merged.tags = { ...defaultCharacter.tags, ...(saved.data.tags || {}) }
+
+                        if (typeof merged.tags.proficiencies === 'string') {
+                            const oldVal = merged.tags.proficiencies
+                            merged.tags.proficiencies = { language: oldVal, body: '', mind: '', sense: '', intellect: '' }
+                        }
+
+                        this.character = merged
+                        this.character.id = saved.id
+
+                        // Sanitize Arrays to prevent "undefined.name" errors
+                        const arrays = ['careerPaths', 'additionalKarma', 'skills', 'weapons', 'armors', 'vehicles', 'items']
+
+                        // Ensure territory exists
+                        if (!this.character.territory) this.character.territory = JSON.parse(JSON.stringify(defaultCharacter.territory))
+
+                        // Also sanitize territory arrays
+                        if (this.character.territory) {
+                            if (Array.isArray(this.character.territory.facilities)) {
+                                this.character.territory.facilities = this.character.territory.facilities.map((item, idx) => {
+                                    return item || JSON.parse(JSON.stringify(defaultCharacter.territory.facilities[idx] || defaultCharacter.territory.facilities[0] || {}))
+                                })
+                            }
+                            // Sanitize EVENTS
+                            if (Array.isArray(this.character.territory.events)) {
+                                this.character.territory.events = this.character.territory.events.map((item, idx) => {
+                                    return item || JSON.parse(JSON.stringify(defaultCharacter.territory.events[idx] || defaultCharacter.territory.events[0] || {}))
+                                })
+                            }
+                        }
+
+                        arrays.forEach(key => {
+                            if (Array.isArray(this.character[key])) {
+                                this.character[key] = this.character[key].map((item, idx) => {
+                                    // if item is null/undefined, recover from default or create empty
+                                    if (!item) {
+                                        return JSON.parse(JSON.stringify(defaultCharacter[key][idx] || defaultCharacter[key][0] || {}))
+                                    }
+                                    return item
+                                })
+                            }
+                        })
+
+                        // DEBUG LOGIC
+                        console.log('editCharacter Debug:');
+                        console.log('Saved ID:', saved.user_id);
+                        console.log('Current User:', this.user ? this.user.id : 'None');
+
+                        if (saved.user_id) {
+                            this.character.user_id = saved.user_id;
+                        } else {
+                            if (this.user) {
+                                console.log('Adopting orphan data for current user');
+                                this.character.user_id = this.user.id;
+                            } else {
+                                console.log('No user, setting empty');
+                                this.character.user_id = '';
+                            }
+                        }
+
+                        this.view = 'edit'
+                        // Update Browser URL to match current character (for easier refreshing/sharing)
+                        const newUrl = window.location.pathname + '?id=' + saved.id;
+                        window.history.pushState({ path: newUrl }, '', newUrl);
+                    } catch (e) {
+                        alert('Edit Error: ' + e);
+                    }
+                },
+                async saveCharacter() {
+                    if (!this.user) return false
+                    const payload = {
+                        user_id: this.user.id,
+                        data: this.character,
+                        updated_at: new Date()
+                    }
+
+                    let error
+                    if (this.character.id) {
+                        ({ error } = await this.supabase.from('characters').update({ data: this.character, updated_at: new Date() }).eq('id', this.character.id))
+                    } else {
+                        const { data, error: err } = await this.supabase.from('characters').insert([payload]).select()
+                        if (data) this.character.id = data[0].id
+                        error = err
+                    }
+
+                    if (error) {
+                        this.showMessage(error.message, 'error')
+                        return false
+                    } else {
+                        this.showMessage('保存しました')
+                        this.loadCharacters()
+                        return true
+                    }
+                },
+                async saveAndExit() {
+                    if (await this.saveCharacter()) {
+                        this.view = 'dashboard'
+                    }
+                },
+                async deleteCharacter() {
+                    if (!this.character.id || !this.canDelete) return
+                    if (!confirm('本当にキャラクターシートを削除しますか？')) return
+
+                    const { error } = await this.supabase.from('characters').delete().eq('id', this.character.id)
+                    if (error) {
+                        this.showMessage('削除失敗: ' + error.message, 'error')
+                    } else {
+                        this.showMessage('削除しました')
+                        this.loadCharacters()
+                        this.view = 'dashboard'
+                    }
+                },
+                async loadCharacters() {
+                    if (!this.user) return
+                    const { data } = await this.supabase.from('characters').select('*').eq('user_id', this.user.id).order('updated_at', { ascending: false })
+                    this.savedCharacters = data || []
+                },
+                async loadCharacterById(id) {
+                    const { data, error } = await this.supabase.from('characters').select('*').eq('id', id).single()
+                    if (data) {
+                        this.editCharacter(data)
+                        this.view = 'browse' // Default to browse for URL loading
+                    } else {
+                        if (error) console.error(error)
+                        this.showMessage('キャラクターが見つかりません', 'error')
+                    }
+                }
+            }
+        })
+
+        try {
+            app.mount('#app');
+        } catch (e) {
+            console.error("Mount Error: " + e)
+            alert("Application Error: " + e)
+        }
+    </script>
+</body>
+
+</html>
