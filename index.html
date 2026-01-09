@@ -464,7 +464,7 @@
                                 </div>
                                 <div><label class="label-sm">初期資金</label><input v-model.number="character.money.initial"
                                         type="number" class="input-base"></div>
-                                <div><label class="label-sm">修正値</label><input
+                                <div><label class="label-sm">支出修正値</label><input
                                         v-model.number="character.money.expenseMod" type="number" class="input-base">
                                 </div>
                                 <div><label class="label-sm">支出合計</label>
@@ -597,7 +597,7 @@
 
                         <!-- Additional Karma -->
                         <div class="panel">
-                            <h3 class="section-title">追加仕様カルマ</h3>
+                            <h3 class="section-title">追加使用カルマ</h3>
                             <table class="w-full text-sm">
                                 <thead>
                                     <tr>
@@ -680,7 +680,7 @@
                             </table>
                             <div class="btn-add" v-if="!isReadOnly"
                                 @click="addRow(character.skills, {name:'',cost:'',ap:'',range:'',target:'',check:'',effect:''})">
-                                + 行追加</div>
+                                + 追加</div>
                         </div>
 
                         <!-- Weapons -->
@@ -700,7 +700,6 @@
                                             <th>C値</th>
                                             <th>威力</th>
                                             <th>重量</th>
-                                            <th>価格</th>
                                             <th></th>
                                         </tr>
                                     </thead>
@@ -713,16 +712,14 @@
                                                         class="table-input w-20 text-center"></td>
                                                 <td><input v-model="item.range" class="table-input w-16"></td>
                                                 <td><input v-model="item.target" class="table-input w-16"></td>
-                                                <td><input v-model="item.check" class="table-input w-16"></td>
+                                                <td><input v-model="item.check" class="table-input w-24"></td>
                                                 <td><input v-model.number="item.fVal" type="number"
                                                         class="table-input w-10 text-center"></td>
                                                 <td><input v-model.number="item.cVal" type="number"
                                                         class="table-input w-10 text-center"></td>
-                                                <td><input v-model="item.power" class="table-input w-12"></td>
+                                                <td><input v-model="item.power" class="table-input w-20"></td>
                                                 <td><input v-model.number="item.weight" type="number"
                                                         class="table-input w-10 text-center"></td>
-                                                <td><input v-model.number="item.price" type="number"
-                                                        class="table-input w-16 text-right"></td>
                                                 <td class="text-center"><span class="btn-del"
                                                         @click="removeRow(character.weapons, idx)"
                                                         :class="{'opacity-0 pointer-events-none': character.weapons.length <= 1}"
@@ -739,8 +736,8 @@
                                 </table>
                             </div>
                             <div class="btn-add" v-if="!isReadOnly"
-                                @click="addRow(character.weapons, {name:'',part:'',ap:'',range:'',target:'',check:'',fVal:0,cVal:0,power:'',weight:0,price:0,details:''})">
-                                + 行追加</div>
+                                @click="addRow(character.weapons, {name:'',part:'',ap:'',range:'',target:'',check:'',fVal:0,cVal:0,power:'',weight:0,details:''})">
+                                + 追加</div>
                         </div>
 
                         <!-- Armor & Vehicles -->
@@ -843,8 +840,62 @@
                                 </table>
                                 <div class="btn-add" v-if="!isReadOnly"
                                     @click="addRow(character.vehicles, {name:'',ap:'',range:'',target:'',cVal:0,fVal:0,check:'',armor:0,power:'',condition:'',price:0,details:''})">
-                                    +
-                                    行追加</div>
+                                    + 追加</div>
+                            </div>
+
+                            <!-- Followers -->
+                            <div class="panel overflow-x-auto">
+                                <h3 class="section-title">フォロワー (部隊)</h3>
+                                <table class="w-full text-sm min-w-[700px]">
+                                    <thead>
+                                        <tr>
+                                            <th>名前</th>
+                                            <th>人数</th>
+                                            <th>支出(単価)</th>
+                                            <th>支出(合計)</th>
+                                            <th>部隊値(単体)</th>
+                                            <th>部隊値(合計)</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                                        <template v-for="(item, idx) in character.followers" :key="idx">
+                                            <tr class="bg-transparent border-none">
+                                                <td><input v-model="item.name" class="table-input font-bold"></td>
+                                                <td><input v-model.number="item.count" type="number"
+                                                        class="table-input w-16 text-center"></td>
+                                                <td><input v-model.number="item.unitPrice" type="number"
+                                                        class="table-input w-20 text-right"></td>
+                                                <td class="text-right px-2">{{ (item.count || 0) * (item.unitPrice || 0)
+                                                    }}</td>
+                                                <td><input v-model.number="item.troopValue" type="number"
+                                                        class="table-input w-16 text-center"></td>
+                                                <td class="text-center px-2">{{ (item.count || 0) * (item.troopValue ||
+                                                    0) }}</td>
+                                                <td class="text-center"><span class="btn-del"
+                                                        @click="removeRow(character.followers, idx)"
+                                                        :class="{'opacity-0 pointer-events-none': character.followers.length <= 1}"
+                                                        v-if="!isReadOnly">×</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="7">
+                                                    <div class="flex gap-2">
+                                                        <input v-model="item.skill"
+                                                            class="table-input text-xs bg-slate-100 dark:bg-slate-900/30"
+                                                            placeholder="部隊スキル">
+                                                        <input v-model="item.effect"
+                                                            class="table-input text-xs bg-slate-100 dark:bg-slate-900/30"
+                                                            placeholder="効果">
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                                <div class="btn-add" v-if="!isReadOnly"
+                                    @click="addRow(character.followers, {name:'',count:1,unitPrice:0,troopValue:0,skill:'',effect:''})">
+                                    + 追加</div>
                             </div>
                         </div>
 
@@ -894,6 +945,23 @@
                             <span>{{ showTerritory ? '▲ 閉じる' : '▼ 展開' }}</span>
                         </div>
                         <div v-if="showTerritory" class="panel space-y-6">
+                            <!-- Land Section -->
+                            <div>
+                                <h4 class="font-bold text-slate-500 dark:text-slate-400 mb-2">土地</h4>
+                                <div class="grid grid-cols-2 gap-4 max-w-md">
+                                    <div>
+                                        <label class="label-sm">土地数</label>
+                                        <input v-model.number="character.territory.land.count" type="number"
+                                            class="input-base text-center">
+                                    </div>
+                                    <div>
+                                        <label class="label-sm">使用カルマ</label>
+                                        <input v-model.number="character.territory.land.karma" type="number"
+                                            class="input-base text-center">
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Events Table -->
                             <div>
                                 <h4 class="font-bold text-slate-500 dark:text-slate-400 mb-2">イベント表</h4>
@@ -1209,12 +1277,14 @@
             additionalKarma: Array(3).fill().map(() => ({ type: '', name: '', use: '', karma: 0, effect: '', details: '' })),
 
             skills: Array(5).fill().map(() => ({ name: '', cost: '', ap: '', range: '', target: '', check: '', effect: '' })),
-            weapons: Array(5).fill().map(() => ({ name: '', part: '', ap: 0, range: '', target: '', check: '', fVal: 0, cVal: 0, power: '', weight: 0, price: 0, details: '' })),
+            weapons: Array(5).fill().map(() => ({ name: '', part: '', ap: 0, range: '', target: '', check: '', fVal: 0, cVal: 0, power: '', weight: 0, details: '' })),
             armors: Array(5).fill().map(() => ({ name: '', armor: 0, hpMod: 0, weight: 0, details: '' })),
             vehicles: Array(1).fill().map(() => ({ name: '', ap: 0, range: '', target: '', cVal: 0, fVal: 0, check: '', armor: 0, power: '', condition: '', price: 0, details: '' })),
+            followers: Array(2).fill().map(() => ({ name: '', count: 1, unitPrice: 0, troopValue: 0, skill: '', effect: '' })),
             items: Array(5).fill().map(() => ({ name: '', count: 1, weight: 0, details: '' })),
 
             territory: {
+                land: { count: 0, karma: 0 },
                 facilities: Array(10).fill().map(() => ({ name: '', count: 0, type: '', price: 0, effect: '' })),
                 events: Array(20).fill().map(() => ({ name: '', effect: '' }))
             },
@@ -1257,6 +1327,10 @@
                     if (this.character.additionalKarma) {
                         this.character.additionalKarma.forEach(k => sum += (k.karma || 0))
                     }
+                    // Land Karma
+                    if (this.character.territory && this.character.territory.land) {
+                        sum += (this.character.territory.land.karma || 0)
+                    }
                     return sum
                 },
                 potentialKarma() { return this.innerKarma - this.usedKarma },
@@ -1275,8 +1349,9 @@
                     return armors + vehicles + (this.character.subStats.armorMod || 0)
                 },
                 calcTroop() {
-                    // Logic for followers not fully in default array but assuming user adds them
-                    return (this.character.subStats.troopMod || 0)
+                    // Troop Mod + Followers
+                    const followersValue = (this.character.followers || []).reduce((a, b) => a + ((b.troopValue || 0) * (b.count || 0)), 0)
+                    return (this.character.subStats.troopMod || 0) + followersValue
                 },
                 calcWeightLimit() {
                     return (this.getStat('body') * 2) + (this.character.subStats.weightLimitMod || 0)
@@ -1299,7 +1374,8 @@
 
                 // MONEY
                 calcExpenses() {
-                    return (this.character.money.livingCost || 0) + (this.character.money.expenseMod || 0)
+                    const followersCost = (this.character.followers || []).reduce((a, b) => a + ((b.count || 0) * (b.unitPrice || 0)), 0)
+                    return (this.character.money.livingCost || 0) + (this.character.money.expenseMod || 0) + followersCost
                 },
                 calcMoneyHistoryTotal() {
                     return (this.character.money.history || []).reduce((a, b) => a + (b.amount || 0), 0)
@@ -1493,10 +1569,12 @@
                         this.character.id = saved.id
 
                         // Sanitize Arrays to prevent "undefined.name" errors
-                        const arrays = ['careerPaths', 'additionalKarma', 'skills', 'weapons', 'armors', 'vehicles', 'items']
+                        const arrays = ['careerPaths', 'additionalKarma', 'skills', 'weapons', 'armors', 'vehicles', 'followers', 'items']
 
                         // Ensure territory exists
                         if (!this.character.territory) this.character.territory = JSON.parse(JSON.stringify(defaultCharacter.territory))
+                        // Ensure land exists (backward compatibility)
+                        if (!this.character.territory.land) this.character.territory.land = { count: 0, karma: 0 }
 
                         // Also sanitize territory arrays
                         if (this.character.territory) {
