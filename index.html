@@ -1161,12 +1161,7 @@
                         class="w-full bg-green-600 hover:bg-green-500 py-3 rounded-lg font-bold shadow-lg shadow-green-900/30 transition mb-2">
                         編集する
                     </button>
-                    <!-- FALLBACK: Force Edit for any logged in user (if owner check fails) -->
-                    <button v-if="user && !isOwner" type="button"
-                        @click="character.user_id = user.id; view = 'edit'; showMessage('所有権を取得しました')"
-                        class="w-full bg-orange-600 hover:bg-orange-500 py-2 rounded font-bold shadow-lg transition mb-2 text-xs">
-                        強制編集 (Data Rescue)
-                    </button>
+
 
                     <button v-if="user" type="button" @click="view = 'dashboard'"
                         class="w-full bg-slate-200 hover:bg-slate-300 text-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-white py-2 rounded text-sm transition">
@@ -1671,6 +1666,9 @@
                         this.view = 'login'
                         this.showMessage('ログアウトしました')
                     }
+                },
+                validEmail(email) {
+                    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
                 },
                 async signUp() {
                     if (!this.validEmail(this.authForm.email) || !this.authForm.password) {
