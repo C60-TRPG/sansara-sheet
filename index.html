@@ -131,21 +131,29 @@
 
         <!-- VIEW: LOGIN -->
         <div v-if="view === 'login'" class="max-w-md mx-auto mt-20 panel shadow-2xl">
-            <h2 class="text-2xl font-bold mb-6 text-center text-slate-800 dark:text-slate-200">ログイン</h2>
+            <h2 class="text-2xl font-bold mb-6 text-center text-slate-800 dark:text-slate-200">{{ isSignUp ? '新規登録' :
+                'ログイン' }}</h2>
             <div class="space-y-4">
                 <div>
                     <label class="label-sm">メールアドレス</label>
                     <input v-model="authForm.email" type="email" class="input-base">
                 </div>
                 <div>
-                    <label class="label-sm">パスワード</label>
+                    <label class="label-sm">{{ isSignUp ? 'パスワードを設定' : 'パスワード' }}</label>
                     <input v-model="authForm.password" type="password" class="input-base">
                 </div>
-                <div class="flex gap-4 pt-4">
-                    <button @click="signIn"
-                        class="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-2 rounded font-medium transition shadow-lg shadow-blue-900/50">ログイン</button>
-                    <button @click="signUp"
-                        class="flex-1 bg-slate-200 text-slate-800 hover:bg-slate-300 dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600 py-2 rounded font-medium transition">新規登録</button>
+                <div class="pt-4 flex flex-col gap-3">
+                    <button v-if="!isSignUp" @click="signIn"
+                        class="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 rounded font-medium transition shadow-lg shadow-blue-900/50">ログイン</button>
+                    <button v-else @click="signUp"
+                        class="w-full bg-green-600 hover:bg-green-500 text-white py-2 rounded font-medium transition shadow-lg shadow-green-900/50">登録する</button>
+
+                    <div class="text-center text-sm">
+                        <span v-if="!isSignUp" class="text-slate-500 cursor-pointer hover:underline"
+                            @click="isSignUp = true">アカウントをお持ちでない方はこちら（新規登録）</span>
+                        <span v-else class="text-slate-500 cursor-pointer hover:underline"
+                            @click="isSignUp = false">すでにアカウントをお持ちの方はこちら（ログイン）</span>
+                    </div>
                 </div>
             </div>
             <div v-if="!supabaseConfigured"
@@ -1297,6 +1305,7 @@
                 return {
                     supabase: null,
                     supabaseConfigured: false,
+                    isSignUp: false,
                     user: null,
                     view: 'login',
                     message: '',
@@ -1664,11 +1673,19 @@
                     }
                 },
                 async signUp() {
-                    if (!this.validEmail(this.authForm.email)) {
+                    if (!this.validEmail(this.authForm.email) || !this.authForm.password) {
+                        this.showMessage('有効なメールアドレスとパスワードを入力してください', 'error')
+                        return
+                    }
+                    const { data, error } = await this.supabase.auth.signUp({
+                        email: this.authForm.email,
+                        password: this.authForm.password,
+                    })
+                    if (error) {
+                        this.showMessage('登録エラー: ' + error.message, 'error')
                     } else {
-                        this.showMessage('保存しました')
-                        this.loadCharacters()
-                        return true
+                        this.showMessage('確認メールを送信しました。メールを確認してください。', 'success')
+                        this.isSignUp = false
                     }
                 },
                 async saveAndExit() {
