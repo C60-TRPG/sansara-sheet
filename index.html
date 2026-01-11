@@ -328,6 +328,22 @@
                                 </tr>
                             </tbody>
                         </table>
+
+                        <!-- Connections (In-nen) -->
+                        <div class="mt-6 border-t border-slate-200 dark:border-slate-700 pt-4">
+                            <h4 class="font-bold text-slate-500 dark:text-slate-400 mb-2">因縁</h4>
+                            <div class="space-y-2">
+                                <div v-for="(conn, idx) in character.connections" :key="idx"
+                                    class="flex items-center gap-2">
+                                    <input v-model="conn.name" class="input-base" placeholder="因縁">
+                                    <span class="btn-del flex-shrink-0" @click="removeRow(character.connections, idx)"
+                                        v-if="!isReadOnly">×</span>
+                                </div>
+                            </div>
+                            <div class="btn-add" v-if="!isReadOnly" @click="addRow(character.connections, {name:''})">
+                                + 追加
+                            </div>
+                        </div>
                     </section>
 
                     <!-- D & E. 能力値 -->
@@ -1262,6 +1278,7 @@
                 { type: '射程変更', has: false, use: '', strength: '', available: '' },
                 { type: '対象変更', has: false, use: '', strength: '', available: '' },
             ],
+            connections: Array(1).fill().map(() => ({ name: '' })),
             stats: {
                 body: { current: 0, race: 0, growth: 0, mod: 0 },
                 mind: { current: 0, race: 0, growth: 0, mod: 0 },
@@ -1573,7 +1590,7 @@
                         this.character.id = saved.id
 
                         // Sanitize Arrays to prevent "undefined.name" errors
-                        const arrays = ['careerPaths', 'additionalKarma', 'skills', 'weapons', 'armors', 'vehicles', 'followers', 'items']
+                        const arrays = ['careerPaths', 'additionalKarma', 'skills', 'weapons', 'armors', 'vehicles', 'followers', 'items', 'connections']
 
                         // Ensure territory exists
                         if (!this.character.territory) this.character.territory = JSON.parse(JSON.stringify(defaultCharacter.territory))
