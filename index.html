@@ -512,7 +512,7 @@
                                     <div class="text-lg font-bold text-red-400">{{ calcExpenses }}</div>
                                 </div>
                                 <div class="col-span-2 pt-2 border-t border-slate-200 dark:border-slate-700">
-                                    <label class="label-sm">所持金 (初期 - 支出 + 履歴 + セッション)</label>
+                                    <label class="label-sm">所持金 (初期 + 履歴 + セッション)</label>
                                     <div class="text-2xl font-bold text-yellow-400">{{ calcMoneyBalance }}</div>
                                 </div>
                             </div>
@@ -596,13 +596,13 @@
                     <section class="space-y-6">
 
                         <!-- Career Path -->
-                        <div class="panel">
+                        <div class="panel overflow-x-auto">
                             <h3 class="section-title">キャリア</h3>
-                            <table class="w-full text-sm">
+                            <table class="w-full text-sm min-w-[600px]">
                                 <thead>
                                     <tr>
-                                        <th>時期</th>
-                                        <th>キャリア名</th>
+                                        <th class="w-20">時期</th>
+                                        <th class="min-w-[150px]">キャリア名</th>
                                         <th>種別</th>
                                         <th class="w-20">使用カルマ</th>
                                         <th class="w-8"></th>
@@ -629,7 +629,6 @@
                                     </template>
                                 </tbody>
                             </table>
-                            </table>
                             <div class="btn-add" v-if="!isReadOnly"
                                 @click="addRow(character.careerPaths, {period:'',name:'',type:'',karma:0,details:''})">+
                                 行追加
@@ -637,13 +636,13 @@
                         </div>
 
                         <!-- Additional Karma -->
-                        <div class="panel">
+                        <div class="panel overflow-x-auto">
                             <h3 class="section-title">追加使用カルマ</h3>
-                            <table class="w-full text-sm">
+                            <table class="w-full text-sm min-w-[600px]">
                                 <thead>
                                     <tr>
-                                        <th>種別</th>
-                                        <th>スキル名</th>
+                                        <th class="w-24">種別</th>
+                                        <th class="min-w-[150px]">スキル名</th>
                                         <th>使用</th>
                                         <th class="w-20">カルマ</th>
                                         <th class="w-8"></th>
@@ -684,12 +683,12 @@
                         </div>
 
                         <!-- Skills -->
-                        <div class="panel">
+                        <div class="panel overflow-x-auto">
                             <h3 class="section-title">スキル</h3>
-                            <table class="w-full text-sm">
+                            <table class="w-full text-sm min-w-[600px]">
                                 <thead>
                                     <tr>
-                                        <th>名前</th>
+                                        <th class="min-w-[150px]">名前</th>
                                         <th>使用</th>
                                         <th>AP</th>
                                         <th>射程</th>
@@ -728,10 +727,10 @@
                         <div class="panel">
                             <h3 class="section-title">武器</h3>
                             <div class="overflow-x-auto">
-                                <table class="w-full text-sm min-w-[600px]">
+                                <table class="w-full text-sm min-w-[750px]">
                                     <thead>
                                         <tr>
-                                            <th>名前</th>
+                                            <th class="min-w-[150px]">名前</th>
                                             <th>部位</th>
                                             <th>AP</th>
                                             <th>射程</th>
@@ -784,12 +783,12 @@
                         <!-- Armor & Vehicles -->
                         <div class="space-y-6">
                             <!-- Armor -->
-                            <div class="panel">
+                            <div class="panel overflow-x-auto">
                                 <h3 class="section-title">防具</h3>
-                                <table class="w-full text-sm">
+                                <table class="w-full text-sm min-w-[500px]">
                                     <thead>
                                         <tr>
-                                            <th>名前</th>
+                                            <th class="min-w-[150px]">名前</th>
                                             <th>装甲</th>
                                             <th>HP修正</th>
                                             <th>重量</th>
@@ -832,7 +831,7 @@
                                 <table class="w-full text-sm min-w-[600px]">
                                     <thead>
                                         <tr>
-                                            <th>名前</th>
+                                            <th class="min-w-[150px]">名前</th>
                                             <th>AP</th>
                                             <th>射程</th>
                                             <th>対象</th>
@@ -890,7 +889,7 @@
                                 <table class="w-full text-sm min-w-[700px]">
                                     <thead>
                                         <tr>
-                                            <th>名前</th>
+                                            <th class="min-w-[150px]">名前</th>
                                             <th>人数</th>
                                             <th>支出(単価)</th>
                                             <th>支出(合計)</th>
@@ -941,12 +940,12 @@
                         </div>
 
                         <!-- Items -->
-                        <div class="panel">
+                        <div class="panel overflow-x-auto">
                             <h3 class="section-title">道具</h3>
-                            <table class="w-full text-sm">
+                            <table class="w-full text-sm min-w-[500px]">
                                 <thead>
                                     <tr>
-                                        <th>名前</th>
+                                        <th class="min-w-[150px]">名前</th>
                                         <th>個数</th>
                                         <th>重量</th>
                                         <th></th>
@@ -1004,14 +1003,14 @@
                             </div>
 
                             <!-- Events Table -->
-                            <div>
+                            <div class="overflow-x-auto">
                                 <h4 class="font-bold text-slate-500 dark:text-slate-400 mb-2">イベント表</h4>
-                                <table class="w-full text-sm border border-slate-600 text-center">
+                                <table class="w-full text-sm border border-slate-600 text-center min-w-[600px]">
                                     <thead>
                                         <tr class="bg-slate-200 text-slate-800 dark:bg-slate-900 dark:text-slate-200">
                                             <th class="w-20">出目10</th>
                                             <th class="w-20">出目20</th>
-                                            <th class="w-32">イベント名</th>
+                                            <th class="min-w-[150px] w-32">イベント名</th>
                                             <th>効果</th>
                                         </tr>
                                     </thead>
@@ -1037,15 +1036,15 @@
 
 
                             <!-- Facilities -->
-                            <div>
+                            <div class="overflow-x-auto">
                                 <h4 class="font-bold text-slate-500 dark:text-slate-400 mb-2">施設</h4>
-                                <table class="w-full text-sm">
+                                <table class="w-full text-sm min-w-[600px]">
                                     <thead>
                                         <tr>
-                                            <th>施設名</th>
+                                            <th class="min-w-[150px]">施設名</th>
                                             <th class="w-16">数</th>
                                             <th>種別</th>
-                                            <th class="w-20">単価</th>
+                                            <th class="w-20">収入単価</th>
                                             <th class="w-20">小計</th>
                                             <th>効果</th>
                                             <th class="w-8"></th>
@@ -1114,7 +1113,7 @@
                                     <thead>
                                         <tr class="text-slate-500 dark:text-slate-400 text-left">
                                             <th>日時</th>
-                                            <th>シナリオ</th>
+                                            <th class="min-w-[150px]">シナリオ</th>
                                             <th>参加者</th>
                                             <th class="w-16">カルマ</th>
                                             <th class="w-16">報酬</th>
@@ -1427,7 +1426,7 @@
                 },
                 calcMoneyBalance() {
                     const initial = this.character.money.initial || 0
-                    return initial - this.calcExpenses + this.calcMoneyHistoryTotal + this.calcSessionMoney
+                    return initial + this.calcMoneyHistoryTotal + this.calcSessionMoney
                 },
 
                 // TERRITORY
