@@ -296,15 +296,32 @@
                                 <label class="label-sm">チート名</label>
                                 <input v-model="character.cheatsName" class="input-base max-w-md">
                             </div>
-                            <div class="flex gap-4">
-                                <div class="w-32 flex-shrink-0">
+                            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                                <div>
                                     <label class="label-sm">固有能力</label>
                                     <input v-model="character.intrinsicAbility" class="input-base text-center">
                                 </div>
-                                <div class="flex-grow">
-                                    <label class="label-sm">効果</label>
-                                    <input v-model="character.intrinsicEffect" class="input-base" placeholder="効果テキスト">
+                                <div>
+                                    <label class="label-sm">使用</label>
+                                    <input v-model="character.intrinsicUse" class="input-base text-center">
                                 </div>
+                                <div>
+                                    <label class="label-sm">強度</label>
+                                    <input v-model="character.intrinsicStrength" class="input-base text-center">
+                                </div>
+                                <div>
+                                    <label class="label-sm">射程</label>
+                                    <input v-model="character.intrinsicRange" class="input-base text-center">
+                                </div>
+                                <div>
+                                    <label class="label-sm">対象</label>
+                                    <input v-model="character.intrinsicTarget" class="input-base text-center">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="label-sm">効果</label>
+                                <textarea v-model="character.intrinsicEffect" class="input-base h-16"
+                                    placeholder="効果テキスト"></textarea>
                             </div>
                         </div>
                         <table class="w-full text-sm border-collapse">
@@ -1265,6 +1282,10 @@
             karma: { basic: 0, history: 0 },
             cheatsName: '',
             intrinsicAbility: '',
+            intrinsicUse: '',
+            intrinsicStrength: '',
+            intrinsicRange: '',
+            intrinsicTarget: '',
             intrinsicEffect: '',
             cheats: [
                 { type: '直接攻撃', has: false, use: '', strength: '', available: '' },
