@@ -1250,6 +1250,89 @@
 
             </div>
         </div>
+        <!-- FOOTER -->
+        <footer
+            class="mt-12 py-8 text-center text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800">
+            <p class="mb-4 leading-relaxed">
+                本サイトは、「著：千葉直貴／N.G.P」が権利を有する 『異世界転生RPGサンサーラ・バラッド』のキャラクターシートサイトです。<br>
+                画像は著作権、肖像権に問題ないものを使用してください。<br>
+                キャラクターシートに著作権に問題がある内容、その他不適切な内容はお控えください。
+            </p>
+            <div class="flex justify-center gap-4">
+                <button @click="showTerms = true"
+                    class="hover:underline hover:text-slate-700 dark:hover:text-slate-200">利用規約</button>
+                <button @click="showPrivacy = true"
+                    class="hover:underline hover:text-slate-700 dark:hover:text-slate-200">プライバシーポリシー</button>
+            </div>
+            <div class="mt-4 text-[10px] text-slate-400">
+                &copy; 2024 Unofficial Character Sheet Tool
+            </div>
+        </footer>
+
+        <!-- TERMS MODAL -->
+        <div v-if="showTerms"
+            class="fixed inset-0 z-[300] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+            @click.self="showTerms = false">
+            <div class="panel max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-2xl animate-fade-in relative">
+                <button @click="showTerms = false"
+                    class="absolute top-4 right-4 text-slate-500 hover:text-slate-700 text-xl font-bold">×</button>
+                <h3 class="text-xl font-bold mb-6 border-b pb-2">利用規約</h3>
+                <div class="space-y-4 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+                    <section>
+                        <h4 class="font-bold mb-1">1. 免責事項</h4>
+                        <p>当サイトの利用により利用者または第三者に生じた損害について、運営者は一切の責任を負いません。また、当サイト上のデータは予告なく削除・変更される可能性があります。重要なデータはご自身でバックアップを取ることを推奨します。
+                        </p>
+                    </section>
+                    <section>
+                        <h4 class="font-bold mb-1">2. 権利の帰属</h4>
+                        <p>キャラクターデータの著作権は作成者に帰属しますが、システムに関連する用語・データ等の権利は『異世界転生RPGサンサーラ・バラッド』の権利者（千葉直貴／N.G.P）に帰属します。当サイトはファンによる非公式ツールであり、公式とは一切関係ありません。
+                        </p>
+                    </section>
+                    <section>
+                        <h4 class="font-bold mb-1">3. 禁止事項</h4>
+                        <p>以下の行為を禁止します。<br>
+                            ・法令または公序良俗に反する行為<br>
+                            ・著作権、肖像権等の第三者の権利を侵害する行為（権利侵害画像のアップロード等）<br>
+                            ・当サイトの運営を妨害する行為<br>
+                            ・その他、運営者が不適切と判断する行為</p>
+                    </section>
+                </div>
+                <div class="mt-8 text-center">
+                    <button @click="showTerms = false"
+                        class="px-6 py-2 bg-slate-200 dark:bg-slate-700 rounded hover:bg-slate-300 dark:hover:bg-slate-600 transition">閉じる</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- PRIVACY MODAL -->
+        <div v-if="showPrivacy"
+            class="fixed inset-0 z-[300] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+            @click.self="showPrivacy = false">
+            <div class="panel max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-2xl animate-fade-in relative">
+                <button @click="showPrivacy = false"
+                    class="absolute top-4 right-4 text-slate-500 hover:text-slate-700 text-xl font-bold">×</button>
+                <h3 class="text-xl font-bold mb-6 border-b pb-2">プライバシーポリシー</h3>
+                <div class="space-y-4 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+                    <section>
+                        <h4 class="font-bold mb-1">1. 収集する情報</h4>
+                        <p>当サイトは、ユーザー認証のためにメールアドレスを取得・保存します。また、サービス利用に伴い入力されたキャラクターデータをデータベースに保存します。</p>
+                    </section>
+                    <section>
+                        <h4 class="font-bold mb-1">2. 利用目的</h4>
+                        <p>取得した情報は、本サービスの提供、本人確認、データの維持管理のためにのみ利用します。</p>
+                    </section>
+                    <section>
+                        <h4 class="font-bold mb-1">3. 第三者への提供</h4>
+                        <p>法令に基づく場合を除き、ユーザーの同意なく個人情報を第三者に提供することはありません。</p>
+                    </section>
+                </div>
+                <div class="mt-8 text-center">
+                    <button @click="showPrivacy = false"
+                        class="px-6 py-2 bg-slate-200 dark:bg-slate-700 rounded hover:bg-slate-300 dark:hover:bg-slate-600 transition">閉じる</button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
 
@@ -1351,7 +1434,9 @@
                     authForm: { email: '', password: '' },
                     character: JSON.parse(JSON.stringify(defaultCharacter)),
                     savedCharacters: [],
-                    isDark: true
+                    isDark: true,
+                    showTerms: false,
+                    showPrivacy: false
                 }
             },
             computed: {
