@@ -1093,29 +1093,34 @@
                                             <th>種別</th>
                                             <th class="w-20">収入単価</th>
                                             <th class="w-20">小計</th>
-                                            <th>効果</th>
                                             <th class="w-8"></th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr v-for="(fac, idx) in character.territory.facilities" :key="idx"
-                                            class="border-b border-slate-200 dark:border-slate-700">
-                                            <td><input v-model="fac.name" class="table-input"></td>
-                                            <td><input v-model.number="fac.count" type="number"
-                                                    class="table-input text-center"></td>
-                                            <td><input v-model="fac.type" class="table-input"></td>
-                                            <td><input v-model.number="fac.price" type="number"
-                                                    class="table-input text-right"></td>
-                                            <td class="text-right pr-2 text-slate-300">{{ (fac.count || 0) * (fac.price
-                                                ||
-                                                0) }}</td>
-                                            <td><input v-model="fac.effect" class="table-input"></td>
-                                            <td class="text-center"><span class="btn-del"
-                                                    @click="removeRow(character.territory.facilities, idx)"
-                                                    :class="{'opacity-0 pointer-events-none': character.territory.facilities.length <= 1}"
-                                                    v-if="!isReadOnly">×</span>
-                                            </td>
-                                        </tr>
+                                        <template v-for="(fac, idx) in character.territory.facilities" :key="idx">
+                                            <tr class="border-b border-slate-200 dark:border-slate-700 bg-transparent">
+                                                <td><input v-model="fac.name" class="table-input"></td>
+                                                <td><input v-model.number="fac.count" type="number"
+                                                        class="table-input text-center"></td>
+                                                <td><input v-model="fac.type" class="table-input"></td>
+                                                <td><input v-model.number="fac.price" type="number"
+                                                        class="table-input text-right"></td>
+                                                <td class="text-right pr-2 text-slate-300">{{ (fac.count || 0) *
+                                                    (fac.price
+                                                    ||
+                                                    0) }}</td>
+                                                <td class="text-center"><span class="btn-del"
+                                                        @click="removeRow(character.territory.facilities, idx)"
+                                                        :class="{'opacity-0 pointer-events-none': character.territory.facilities.length <= 1}"
+                                                        v-if="!isReadOnly">×</span>
+                                                </td>
+                                            </tr>
+                                            <tr class="border-b border-slate-200 dark:border-slate-700">
+                                                <td colspan="6"><input v-model="fac.effect"
+                                                        class="table-input text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900/30"
+                                                        placeholder="効果"></td>
+                                            </tr>
+                                        </template>
                                     </tbody>
                                     <tfoot>
                                         <tr>
