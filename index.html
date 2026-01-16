@@ -150,17 +150,43 @@
                     <button v-else @click="signUp"
                         class="w-full bg-green-600 hover:bg-green-500 text-white py-2 rounded font-medium transition shadow-lg shadow-green-900/50">登録する</button>
 
-                    <div class="text-center text-sm">
+                    <div class="text-center text-sm flex flex-col gap-2">
                         <span v-if="!isSignUp" class="text-slate-500 cursor-pointer hover:underline"
                             @click="isSignUp = true">アカウントをお持ちでない方はこちら（新規登録）</span>
                         <span v-else class="text-slate-500 cursor-pointer hover:underline"
                             @click="isSignUp = false">すでにアカウントをお持ちの方はこちら（ログイン）</span>
+
+                        <span v-if="!isSignUp" class="text-xs text-slate-400 cursor-pointer hover:underline"
+                            @click="view = 'forgot_password'">パスワードを忘れた方はこちら</span>
                     </div>
                 </div>
             </div>
             <div v-if="!supabaseConfigured"
                 class="mt-6 p-3 bg-yellow-900/30 border border-yellow-700 rounded text-xs text-yellow-200">
                 コード内の SUPABASE_URL と KEY を設定してください。
+            </div>
+        </div>
+
+        <!-- VIEW: FORGOT PASSWORD -->
+        <div v-if="view === 'forgot_password'" class="max-w-md mx-auto mt-20 panel shadow-2xl">
+            <h2 class="text-2xl font-bold mb-6 text-center text-slate-800 dark:text-slate-200">パスワード再設定</h2>
+            <div class="space-y-4">
+                <p class="text-sm text-slate-500 dark:text-slate-400">
+                    登録したメールアドレスを入力してください。<br>再設定用のリンクを送信します。
+                </p>
+                <div>
+                    <label class="label-sm">メールアドレス</label>
+                    <input v-model="authForm.email" type="email" class="input-base">
+                </div>
+                <div class="pt-4 flex flex-col gap-3">
+                    <button @click="sendPasswordReset"
+                        class="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 rounded font-medium transition shadow-lg shadow-blue-900/50">再設定メールを送信</button>
+
+                    <div class="text-center text-sm">
+                        <span class="text-slate-500 cursor-pointer hover:underline"
+                            @click="view = 'login'">ログイン画面に戻る</span>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1708,13 +1734,31 @@
                                 this.loadCharacterById(id)
                             }
                         })
-                        this.supabase.auth.onAuthStateChange((_e, session) => {
+                        this.supabase.auth.onAuthStateChange(async (event, session) => {
+                            // Handle Password Recovery
+                            if (event === 'PASSWORD_RECOVERY') {
+                                this.user = session ? session.user : null
+                                this.view = 'account'
+                                this.showMessage('新しいパスワードを設定してください')
+                                return
+                            }
+
                             this.user = session ? session.user : null
                             if (this.user) this.accountForm.email = this.user.email // Sync email to form
-                            // Only redirect to login if not viewing a public shared sheet
+
+                            // Normal Flow
                             const params = new URLSearchParams(window.location.search)
                             if (!this.user && !params.get('id')) {
-                                this.view = 'login'
+                                // If user was viewing forgot_password, keep it there unless they just logged in
+                                if (this.view !== 'forgot_password') {
+                                    this.view = 'login'
+                                }
+                            } else if (this.user) {
+                                // If coming from login or recovery, go to dashboard (unless recovery caught above)
+                                if (this.view === 'login' || this.view === 'forgot_password') {
+                                    this.view = 'dashboard'
+                                }
+                                this.refreshSavedCharacters()
                             }
                         })
                     } catch (e) {
@@ -1768,6 +1812,25 @@
                         this.showMessage('パスワードを変更しました')
                         this.accountForm.password = ''
                         this.accountForm.passwordConfirm = ''
+                        // If implementing full reset flow, redirect might happen here
+                    }
+                },
+                async sendPasswordReset() {
+                    if (!this.authForm.email) {
+                        this.showMessage('メールアドレスを入力してください', 'error')
+                        return
+                    }
+                    // Redirect to siteURL/account to immediately show password update form after clicking email link
+                    // Assuming the auth state persists correctly
+                    // Note: Supabase handles the token verification.
+                    const redirectTo = window.location.origin
+                    const { data, error } = await this.supabase.auth.resetPasswordForEmail(this.authForm.email, {
+                        redirectTo: redirectTo,
+                    })
+                    if (error) this.showMessage('送信失敗: ' + error.message, 'error')
+                    else {
+                        this.showMessage('再設定メールを送信しました。メールフォルダをご確認ください。')
+                        this.view = 'login'
                     }
                 },
 
