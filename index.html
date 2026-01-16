@@ -1692,9 +1692,7 @@
                     handler(newVal) {
                         // Update user_id if we have a character but no owner (Fix Permissions automatically)
                         if (newVal && this.character) {
-                            console.log('User Watcher: Checking ownership...');
                             if (!this.character.user_id) {
-                                console.log('User Watcher: Adopting legacy/orphan data.');
                                 this.character.user_id = newVal.id;
                                 if (this.view === 'browse') this.view = 'edit';
                             }
@@ -1951,19 +1949,13 @@
                             }
                         })
 
-                        // DEBUG LOGIC
-                        console.log('editCharacter Debug:');
-                        console.log('Saved ID:', saved.user_id);
-                        console.log('Current User:', this.user ? this.user.id : 'None');
 
                         if (saved.user_id) {
                             this.character.user_id = saved.user_id;
                         } else {
                             if (this.user) {
-                                console.log('Adopting orphan data for current user');
                                 this.character.user_id = this.user.id;
                             } else {
-                                console.log('No user, setting empty');
                                 this.character.user_id = '';
                             }
                         }
