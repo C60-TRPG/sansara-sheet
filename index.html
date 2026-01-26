@@ -670,8 +670,8 @@
                             <table class="w-full text-sm min-w-[600px]">
                                 <thead>
                                     <tr>
-                                        <th class="w-20">時期</th>
-                                        <th class="min-w-[150px]">キャリア名</th>
+                                        <th class="min-w-[150px] pl-4">キャリア名</th>
+                                        <th class="w-24">時期</th>
                                         <th>種別</th>
                                         <th class="w-20">使用カルマ</th>
                                         <th class="w-8"></th>
@@ -680,8 +680,8 @@
                                 <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
                                     <template v-for="(item, idx) in character.careerPaths" :key="idx">
                                         <tr>
+                                            <td><input v-model="item.name" class="table-input pl-2 font-bold"></td>
                                             <td><input v-model="item.period" class="table-input"></td>
-                                            <td><input v-model="item.name" class="table-input"></td>
                                             <td><input v-model="item.type" class="table-input"></td>
                                             <td><input v-model.number="item.karma" type="number"
                                                     class="table-input text-right"></td>
