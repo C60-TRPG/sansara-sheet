@@ -1783,11 +1783,10 @@
                                 }
                             } else if (this.user) {
                                 // If coming from login or recovery, go to dashboard (unless recovery caught above)
-                                if (this.view === 'login' || this.view === 'forgot_password') {
-                                    this.view = 'dashboard'
-                                }
-                                this.refreshSavedCharacters()
+                                this.view = 'dashboard'
                             }
+                            this.loadCharacters()
+
                         })
                     } catch (e) {
                         console.error(e)
@@ -1798,10 +1797,11 @@
                     setTimeout(() => this.message = '', 4000)
                 },
                 async signIn() {
-                    const { error } = await this.supabase.auth.signInWithPassword(this.authForm)
+                    const { data, error } = await this.supabase.auth.signInWithPassword(this.authForm)
                     if (error) {
                         this.showMessage(error.message, 'error')
                     } else {
+                        if (data?.user) this.user = data.user
                         // Force navigation to dashboard on success
                         this.view = 'dashboard'
                         this.loadCharacters()
