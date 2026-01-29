@@ -342,6 +342,15 @@
                                     <label class="label-sm">性別</label>
                                     <input v-model="character.personal.gender" class="input-base">
                                 </div>
+                                <div class="col-span-2 md:col-span-3">
+                                    <label class="label-sm">種族</label>
+                                    <input v-model="character.personal.race" class="input-base">
+                                </div>
+                                <div>
+                                    <label class="label-sm">種族カルマ</label>
+                                    <input v-model.number="character.personal.raceKarma" type="number"
+                                        class="input-base">
+                                </div>
                                 <div class="col-span-2">
                                     <label class="label-sm">死因</label>
                                     <input v-model="character.personal.causeOfDeath" class="input-base">
@@ -1543,7 +1552,7 @@
         const defaultCharacter = {
             id: null,
             user_id: '',
-            personal: { name: '', playerName: '', realName: '', age: '', gender: '', causeOfDeath: '', features: '', homeland: '', image: null },
+            personal: { name: '', playerName: '', realName: '', race: '', raceKarma: 0, age: '', gender: '', causeOfDeath: '', features: '', homeland: '', image: null },
             karma: { basic: 0, history: 0 },
             cheatsName: '',
             intrinsicAbility: '',
@@ -1633,6 +1642,8 @@
                 innerKarma() { return (this.character.karma.basic || 0) + (this.character.karma.history || 0) + this.sessionKarma },
                 usedKarma() {
                     let sum = 0
+                    // Race Karma
+                    sum += (this.character.personal.raceKarma || 0)
                     // Stats Growth
                     Object.values(this.character.stats).forEach(s => sum += (s.growth || 0))
                     // Career Path
