@@ -1751,7 +1751,14 @@
                         this.supabase.auth.getSession().then(({ data: { session } }) => {
                             if (session) {
                                 this.user = session.user
-                                this.view = 'dashboard'
+                                // Check for Password Recovery via Hash (Fallback)
+                                const hash = window.location.hash
+                                if (!hash || !hash.includes('type=recovery')) {
+                                    this.view = 'dashboard'
+                                } else {
+                                    this.view = 'account'
+                                    this.showMessage('新しいパスワードを設定してください')
+                                }
                                 this.loadCharacters()
                             }
 
