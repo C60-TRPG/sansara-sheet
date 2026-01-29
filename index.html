@@ -1791,7 +1791,11 @@
                                 }
                             } else if (this.user) {
                                 // If coming from login or recovery, go to dashboard (unless recovery caught above)
-                                this.view = 'dashboard'
+                                // Prevent redirect if we are in recovery mode (hash check)
+                                const hash = window.location.hash
+                                if (!hash || !hash.includes('type=recovery')) {
+                                    this.view = 'dashboard'
+                                }
                             }
                             this.loadCharacters()
 
