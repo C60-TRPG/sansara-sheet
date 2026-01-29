@@ -1621,7 +1621,10 @@
                     isDark: true,
                     showTerms: false,
                     showPrivacy: false,
-                    showDeleteAccountModal: false
+                    showTerms: false,
+                    showPrivacy: false,
+                    showDeleteAccountModal: false,
+                    isRecovery: false
                 }
             },
             computed: {
@@ -1749,37 +1752,37 @@
                     try {
                         this.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
                         this.supabase.auth.getSession().then(({ data: { session } }) => {
+                            // First, check if we are in recovery mode via Hash
+                            const hash = window.location.hash
+                            if (hash && hash.includes('type=recovery')) {
+                                this.isRecovery = true
+                                this.view = 'account'
+                                this.showMessage('新しいパスワードを設定してください')
+                            }
+
                             if (session) {
                                 this.user = session.user
-                                // Check for Password Recovery via Hash (Fallback)
-                                const hash = window.location.hash
-                                if (!hash || !hash.includes('type=recovery')) {
+                                // Only go to dashboard if NOT in recovery mode
+                                if (!this.isRecovery) {
                                     this.view = 'dashboard'
-                                } else {
-                                    this.view = 'account'
-                                    this.showMessage('新しいパスワードを設定してください')
                                 }
                                 this.loadCharacters()
                             }
 
-                            // URL check - Perform AFTER auth state is known
-                            const params = new URLSearchParams(window.location.search)
-                            const id = params.get('id')
-                            if (id) {
-                                this.loadCharacterById(id)
+                            // URL check (only if not recovery)
+                            if (!this.isRecovery) {
+                                const params = new URLSearchParams(window.location.search)
+                                const id = params.get('id')
+                                if (id) {
+                                    this.loadCharacterById(id)
+                                }
                             }
                         })
 
-                        // Check for Password Recovery via Hash (Fallback)
-                        const hash = window.location.hash
-                        if (hash && hash.includes('type=recovery')) {
-                            this.view = 'account'
-                            this.showMessage('新しいパスワードを設定してください')
-                        }
-
                         this.supabase.auth.onAuthStateChange(async (event, session) => {
-                            // Handle Password Recovery
+                            // Handle Password Recovery Event
                             if (event === 'PASSWORD_RECOVERY') {
+                                this.isRecovery = true
                                 this.user = session ? session.user : null
                                 this.view = 'account'
                                 this.showMessage('新しいパスワードを設定してください')
@@ -1788,6 +1791,9 @@
 
                             this.user = session ? session.user : null
                             if (this.user) this.accountForm.email = this.user.email // Sync email to form
+
+                            // If we are in recovery mode, DO NOT redirect to dashboard
+                            if (this.isRecovery) return
 
                             // Normal Flow
                             const params = new URLSearchParams(window.location.search)
@@ -1798,14 +1804,15 @@
                                 }
                             } else if (this.user) {
                                 // If coming from login or recovery, go to dashboard (unless recovery caught above)
-                                // Prevent redirect if we are in recovery mode (hash check)
-                                const hash = window.location.hash
-                                if (!hash || !hash.includes('type=recovery')) {
+                                // Only redirect if we are NOT already on account page (to avoid jumpiness)
+                                if (this.view === 'login' || this.view === 'forgot_password') {
                                     this.view = 'dashboard'
                                 }
                             }
-                            this.loadCharacters()
-
+                            // Always load characters if logged in
+                            if (this.user) {
+                                this.loadCharacters()
+                            }
                         })
                     } catch (e) {
                         console.error(e)
