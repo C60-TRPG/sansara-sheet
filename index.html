@@ -66,6 +66,13 @@
                        focus:ring-1 focus:ring-blue-500 focus:bg-slate-100 dark:focus:bg-slate-900;
             }
 
+            .table-input-framed {
+                @apply w-full px-2 py-1 rounded border transition-colors
+                       bg-white border-slate-300 text-slate-800
+                       dark:bg-slate-800 dark:border-slate-600 dark:text-white
+                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+            }
+
             /* Custom Utility for Panel Backgrounds */
             .panel {
                 @apply p-6 rounded-xl border
@@ -705,36 +712,39 @@
                         <!-- Career Path -->
                         <div class="panel overflow-x-auto">
                             <h3 class="section-title">キャリア</h3>
-                            <table class="w-full text-sm min-w-[600px]">
+                            <table class="w-full text-sm min-w-[600px] border-separate border-spacing-y-2">
                                 <thead>
                                     <tr>
-                                        <th class="min-w-[150px] pl-4">キャリア名</th>
+                                        <th class="min-w-[150px] pl-2">キャリア名</th>
                                         <th class="w-24">時期</th>
                                         <th>種別</th>
                                         <th class="w-20">使用カルマ</th>
                                         <th class="w-8"></th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-                                    <template v-for="(item, idx) in character.careerPaths" :key="idx">
-                                        <tr>
-                                            <td><input v-model="item.name" class="table-input pl-2 font-bold"></td>
-                                            <td><input v-model="item.period" class="table-input"></td>
-                                            <td><input v-model="item.type" class="table-input"></td>
-                                            <td><input v-model.number="item.karma" type="number"
-                                                    class="table-input text-right"></td>
-                                            <td class="text-center"><span class="btn-del"
+                                <template v-for="(item, idx) in character.careerPaths" :key="idx">
+                                    <tbody
+                                        class="bg-slate-50 dark:bg-slate-900/40 border-2 border-slate-300 dark:border-slate-600 rounded-lg shadow-sm">
+                                        <tr class="border-b border-slate-200 dark:border-slate-700/50">
+                                            <td class="pt-2 pl-2"><input v-model="item.name"
+                                                    class="table-input-framed font-bold"></td>
+                                            <td class="pt-2"><input v-model="item.period" class="table-input-framed">
+                                            </td>
+                                            <td class="pt-2"><input v-model="item.type" class="table-input-framed"></td>
+                                            <td class="pt-2"><input v-model.number="item.karma" type="number"
+                                                    class="table-input-framed text-right"></td>
+                                            <td class="pt-2 pr-2 text-center"><span class="btn-del"
                                                     @click="removeRow(character.careerPaths, idx)"
                                                     v-if="!isReadOnly && idx>0">×</span>
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td colspan="5"><input v-model="item.details"
-                                                    class="table-input text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900/30"
+                                            <td colspan="5" class="pb-2 px-2 pt-1"><input v-model="item.details"
+                                                    class="table-input-framed text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900/30"
                                                     placeholder="取得スキル・特性・習熟"></td>
                                         </tr>
-                                    </template>
-                                </tbody>
+                                    </tbody>
+                                </template>
                             </table>
                             <div class="btn-add" v-if="!isReadOnly"
                                 @click="addRow(character.careerPaths, {period:'',name:'',type:'',karma:0,details:''})">+
@@ -745,43 +755,45 @@
                         <!-- Additional Karma -->
                         <div class="panel overflow-x-auto">
                             <h3 class="section-title">追加使用カルマ</h3>
-                            <table class="w-full text-sm min-w-[600px]">
+                            <table class="w-full text-sm min-w-[600px] border-separate border-spacing-y-2">
                                 <thead>
                                     <tr>
-                                        <th class="w-24">種別</th>
+                                        <th class="w-24 pl-2">種別</th>
                                         <th class="min-w-[150px]">スキル名</th>
                                         <th>使用</th>
                                         <th class="w-20">カルマ</th>
                                         <th class="w-8"></th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-                                    <template v-for="(item, idx) in character.additionalKarma" :key="idx">
-                                        <tr>
-                                            <td><input v-model="item.type" class="table-input"></td>
-                                            <td><input v-model="item.name" class="table-input"></td>
-                                            <td><input v-model="item.use" class="table-input"></td>
-                                            <td><input v-model.number="item.karma" type="number"
-                                                    class="table-input text-right"></td>
-                                            <td class="text-center"><span class="btn-del"
+                                <template v-for="(item, idx) in character.additionalKarma" :key="idx">
+                                    <tbody
+                                        class="bg-slate-50 dark:bg-slate-900/40 border-2 border-slate-300 dark:border-slate-600 rounded-lg shadow-sm">
+                                        <tr class="border-b border-slate-200 dark:border-slate-700/50">
+                                            <td class="pt-2 pl-2"><input v-model="item.type" class="table-input-framed">
+                                            </td>
+                                            <td class="pt-2"><input v-model="item.name" class="table-input-framed"></td>
+                                            <td class="pt-2"><input v-model="item.use" class="table-input-framed"></td>
+                                            <td class="pt-2"><input v-model.number="item.karma" type="number"
+                                                    class="table-input-framed text-right"></td>
+                                            <td class="pt-2 pr-2 text-center"><span class="btn-del"
                                                     @click="removeRow(character.additionalKarma, idx)"
                                                     v-if="!isReadOnly">×</span>
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td colspan="5">
+                                            <td colspan="5" class="pb-2 px-2 pt-1">
                                                 <div class="grid grid-cols-2 gap-2">
                                                     <input v-model="item.effect"
-                                                        class="table-input text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900/30"
+                                                        class="table-input-framed text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900/30"
                                                         placeholder="効果">
                                                     <input v-model="item.details"
-                                                        class="table-input text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900/30"
+                                                        class="table-input-framed text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900/30"
                                                         placeholder="取得物等">
                                                 </div>
                                             </td>
                                         </tr>
-                                    </template>
-                                </tbody>
+                                    </tbody>
+                                </template>
                             </table>
                             <div class="btn-add" v-if="!isReadOnly"
                                 @click="addRow(character.additionalKarma, {type:'',name:'',use:'',karma:0,effect:'',details:''})">
@@ -792,10 +804,10 @@
                         <!-- Skills -->
                         <div class="panel overflow-x-auto">
                             <h3 class="section-title">スキル</h3>
-                            <table class="w-full text-sm min-w-[600px]">
+                            <table class="w-full text-sm min-w-[600px] border-separate border-spacing-y-2">
                                 <thead>
                                     <tr>
-                                        <th class="min-w-[150px]">名前</th>
+                                        <th class="min-w-[150px] pl-2">名前</th>
                                         <th>使用</th>
                                         <th>AP</th>
                                         <th>射程</th>
@@ -804,26 +816,32 @@
                                         <th class="w-8"></th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-                                    <template v-for="(item, idx) in character.skills" :key="idx">
-                                        <tr>
-                                            <td><input v-model="item.name" class="table-input font-bold"></td>
-                                            <td><input v-model="item.cost" class="table-input"></td>
-                                            <td><input v-model="item.ap" class="table-input w-12 text-center"></td>
-                                            <td><input v-model="item.range" class="table-input"></td>
-                                            <td><input v-model="item.target" class="table-input"></td>
-                                            <td><input v-model="item.check" class="table-input"></td>
-                                            <td class="text-center"><span class="btn-del"
+                                <template v-for="(item, idx) in character.skills" :key="idx">
+                                    <tbody
+                                        class="bg-slate-50 dark:bg-slate-900/40 border-2 border-slate-300 dark:border-slate-600 rounded-lg shadow-sm">
+                                        <tr class="border-b border-slate-200 dark:border-slate-700/50">
+                                            <td class="pt-2 pl-2"><input v-model="item.name"
+                                                    class="table-input-framed font-bold"></td>
+                                            <td class="pt-2"><input v-model="item.cost" class="table-input-framed"></td>
+                                            <td class="pt-2"><input v-model="item.ap"
+                                                    class="table-input-framed w-12 text-center"></td>
+                                            <td class="pt-2"><input v-model="item.range" class="table-input-framed">
+                                            </td>
+                                            <td class="pt-2"><input v-model="item.target" class="table-input-framed">
+                                            </td>
+                                            <td class="pt-2"><input v-model="item.check" class="table-input-framed">
+                                            </td>
+                                            <td class="pt-2 pr-2 text-center"><span class="btn-del"
                                                     @click="removeRow(character.skills, idx)"
                                                     v-if="!isReadOnly && idx>0">×</span></td>
                                         </tr>
                                         <tr>
-                                            <td colspan="7"><input v-model="item.effect"
-                                                    class="table-input text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900/30"
+                                            <td colspan="7" class="pb-2 px-2 pt-1"><input v-model="item.effect"
+                                                    class="table-input-framed text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900/30"
                                                     placeholder="効果"></td>
                                         </tr>
-                                    </template>
-                                </tbody>
+                                    </tbody>
+                                </template>
                             </table>
                             <div class="btn-add" v-if="!isReadOnly"
                                 @click="addRow(character.skills, {name:'',cost:'',ap:'',range:'',target:'',check:'',effect:''})">
@@ -834,10 +852,10 @@
                         <div class="panel">
                             <h3 class="section-title">武器</h3>
                             <div class="overflow-x-auto">
-                                <table class="w-full text-sm min-w-[750px]">
+                                <table class="w-full text-sm min-w-[750px] border-separate border-spacing-y-2">
                                     <thead>
                                         <tr>
-                                            <th class="min-w-[150px]">名前</th>
+                                            <th class="min-w-[150px] pl-2">名前</th>
                                             <th>部位</th>
                                             <th>AP</th>
                                             <th>射程</th>
@@ -845,45 +863,80 @@
                                             <th>判定</th>
                                             <th>F値</th>
                                             <th>C値</th>
-                                            <th>威力</th>
+                                            <!-- Removed Power from Header -->
                                             <th>重量</th>
                                             <th></th>
                                         </tr>
                                     </thead>
-                                    <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-                                        <template v-for="(item, idx) in character.weapons" :key="idx">
-                                            <tr class="bg-transparent">
-                                                <td><input v-model="item.name" class="table-input font-bold"></td>
-                                                <td><input v-model="item.part" class="table-input w-16"></td>
-                                                <td><input v-model="item.ap" type="text"
-                                                        class="table-input w-20 text-center"></td>
-                                                <td><input v-model="item.range" class="table-input w-16"></td>
-                                                <td><input v-model="item.target" class="table-input w-16"></td>
-                                                <td><input v-model="item.check" class="table-input w-24"></td>
-                                                <td><input v-model.number="item.fVal" type="number"
-                                                        class="table-input w-10 text-center"></td>
-                                                <td><input v-model.number="item.cVal" type="number"
-                                                        class="table-input w-10 text-center"></td>
-                                                <td><input v-model="item.power" class="table-input w-20"></td>
-                                                <td><input v-model.number="item.weight" type="number"
-                                                        class="table-input w-10 text-center"></td>
-                                                <td class="text-center"><span class="btn-del"
+                                    <template v-for="(item, idx) in character.weapons" :key="idx">
+                                        <tbody
+                                            class="bg-slate-50 dark:bg-slate-900/40 border-2 border-slate-300 dark:border-slate-600 rounded-lg shadow-sm">
+                                            <!-- Row 1: Basic Info -->
+                                            <tr class="border-b border-slate-200 dark:border-slate-700/50">
+                                                <td class="pt-2 pl-2"><input v-model="item.name"
+                                                        class="table-input-framed font-bold"></td>
+                                                <td class="pt-2"><input v-model="item.part"
+                                                        class="table-input-framed w-16"></td>
+                                                <td class="pt-2"><input v-model="item.ap" type="text"
+                                                        class="table-input-framed w-20 text-center"></td>
+                                                <td class="pt-2"><input v-model="item.range"
+                                                        class="table-input-framed w-16"></td>
+                                                <td class="pt-2"><input v-model="item.target"
+                                                        class="table-input-framed w-16"></td>
+                                                <td class="pt-2"><input v-model="item.check"
+                                                        class="table-input-framed w-24"></td>
+                                                <td class="pt-2"><input v-model.number="item.fVal" type="number"
+                                                        class="table-input-framed w-10 text-center"></td>
+                                                <td class="pt-2"><input v-model.number="item.cVal" type="number"
+                                                        class="table-input-framed w-10 text-center"></td>
+                                                <td class="pt-2"><input v-model.number="item.weight" type="number"
+                                                        class="table-input-framed w-10 text-center"></td>
+                                                <td class="pt-2 pr-2 text-center"><span class="btn-del"
                                                         @click="removeRow(character.weapons, idx)"
                                                         :class="{'opacity-0 pointer-events-none': character.weapons.length <= 1}"
                                                         v-if="!isReadOnly">×</span>
                                                 </td>
                                             </tr>
+                                            <!-- Row 2: Power Section -->
                                             <tr>
-                                                <td colspan="12"><input v-model="item.details"
-                                                        class="table-input text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900/30"
-                                                        placeholder="特性・タグ・効果"></td>
+                                                <td colspan="10" class="px-2 pb-1 pt-1">
+                                                    <div class="flex items-center gap-2">
+                                                        <span
+                                                            class="text-xs font-bold text-slate-600 dark:text-slate-400 whitespace-nowrap bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded">威力</span>
+                                                        <input v-model="item.powerAttr"
+                                                            class="table-input-framed w-24 text-xs text-center"
+                                                            placeholder="属性">
+                                                        <select v-model="item.powerAbility"
+                                                            class="table-input-framed w-20 text-xs text-center appearance-none">
+                                                            <option>身</option>
+                                                            <option>精</option>
+                                                            <option>感</option>
+                                                            <option>知</option>
+                                                        </select>
+                                                        <input v-model="item.powerValue"
+                                                            class="table-input-framed flex-grow text-xs"
+                                                            placeholder="数値">
+                                                    </div>
+                                                </td>
                                             </tr>
-                                        </template>
-                                    </tbody>
+                                            <!-- Row 3: Details (Features/Tags/Effects) -->
+                                            <tr>
+                                                <td colspan="10" class="pb-2 px-2 pt-1">
+                                                    <div class="flex items-center gap-2">
+                                                        <span
+                                                            class="text-xs font-bold text-slate-600 dark:text-slate-400 whitespace-nowrap bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded">特性・タグ・効果</span>
+                                                        <input v-model="item.details"
+                                                            class="table-input-framed text-xs w-full"
+                                                            placeholder="特性・タグ・効果">
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </template>
                                 </table>
                             </div>
                             <div class="btn-add" v-if="!isReadOnly"
-                                @click="addRow(character.weapons, {name:'',part:'',ap:'',range:'',target:'',check:'',fVal:0,cVal:0,power:'',weight:0,details:''})">
+                                @click="addRow(character.weapons, {name:'',part:'',ap:'',range:'',target:'',check:'',fVal:0,cVal:0,powerAttr:'',powerAbility:'身',powerValue:'',weight:0,details:''})">
                                 + 追加</div>
                         </div>
 
@@ -892,10 +945,10 @@
                             <!-- Armor -->
                             <div class="panel overflow-x-auto">
                                 <h3 class="section-title">防具</h3>
-                                <table class="w-full text-sm min-w-[500px]">
+                                <table class="w-full text-sm min-w-[500px] border-separate border-spacing-y-2">
                                     <thead>
                                         <tr>
-                                            <th class="min-w-[150px]">名前</th>
+                                            <th class="min-w-[150px] pl-2">名前</th>
                                             <th>部位</th>
                                             <th>装甲</th>
                                             <th>HP修正</th>
@@ -903,31 +956,34 @@
                                             <th></th>
                                         </tr>
                                     </thead>
-                                    <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-                                        <template v-for="(item, idx) in character.armors" :key="idx">
-                                            <tr>
-                                                <td><input v-model="item.name" class="table-input font-bold"></td>
-                                                <td><input v-model="item.part" class="table-input w-12 text-center">
+                                    <template v-for="(item, idx) in character.armors" :key="idx">
+                                        <tbody
+                                            class="bg-slate-50 dark:bg-slate-900/40 border-2 border-slate-300 dark:border-slate-600 rounded-lg shadow-sm">
+                                            <tr class="border-b border-slate-200 dark:border-slate-700/50">
+                                                <td class="pt-2 pl-2"><input v-model="item.name"
+                                                        class="table-input-framed font-bold"></td>
+                                                <td class="pt-2"><input v-model="item.part"
+                                                        class="table-input-framed w-12 text-center">
                                                 </td>
-                                                <td><input v-model.number="item.armor" type="number"
-                                                        class="table-input w-12 text-center"></td>
-                                                <td><input v-model.number="item.hpMod" type="number"
-                                                        class="table-input w-12 text-center"></td>
-                                                <td><input v-model.number="item.weight" type="number"
-                                                        class="table-input w-12 text-center"></td>
-                                                <td class="text-center"><span class="btn-del"
+                                                <td class="pt-2"><input v-model.number="item.armor" type="number"
+                                                        class="table-input-framed w-12 text-center"></td>
+                                                <td class="pt-2"><input v-model.number="item.hpMod" type="number"
+                                                        class="table-input-framed w-12 text-center"></td>
+                                                <td class="pt-2"><input v-model.number="item.weight" type="number"
+                                                        class="table-input-framed w-12 text-center"></td>
+                                                <td class="pt-2 pr-2 text-center"><span class="btn-del"
                                                         @click="removeRow(character.armors, idx)"
                                                         :class="{'opacity-0 pointer-events-none': character.armors.length <= 1}"
                                                         v-if="!isReadOnly">×</span>
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td colspan="5"><input v-model="item.details"
-                                                        class="table-input text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900/30"
+                                                <td colspan="6" class="pb-2 px-2 pt-1"><input v-model="item.details"
+                                                        class="table-input-framed text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900/30"
                                                         placeholder="特性・タグ"></td>
                                             </tr>
-                                        </template>
-                                    </tbody>
+                                        </tbody>
+                                    </template>
                                 </table>
                                 <div class="btn-add" v-if="!isReadOnly"
                                     @click="addRow(character.armors, {name:'',part:'',armor:0,hpMod:0,weight:0,details:''})">
@@ -939,10 +995,10 @@
                             <!-- Vehicles -->
                             <div class="panel overflow-x-auto">
                                 <h3 class="section-title">乗り物/兵器</h3>
-                                <table class="w-full text-sm min-w-[600px]">
+                                <table class="w-full text-sm min-w-[600px] border-separate border-spacing-y-2">
                                     <thead>
                                         <tr>
-                                            <th class="min-w-[150px]">名前</th>
+                                            <th class="min-w-[150px] pl-2">名前</th>
                                             <th>AP</th>
                                             <th>射程</th>
                                             <th>対象</th>
@@ -956,38 +1012,45 @@
                                             <th></th>
                                         </tr>
                                     </thead>
-                                    <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-                                        <template v-for="(item, idx) in character.vehicles" :key="idx">
-                                            <tr class="bg-transparent">
-                                                <td><input v-model="item.name" class="table-input font-bold"></td>
-                                                <td><input v-model="item.ap" type="text"
-                                                        class="table-input w-20 text-center"></td>
-                                                <td><input v-model="item.range" class="table-input w-12"></td>
-                                                <td><input v-model="item.target" class="table-input w-12"></td>
-                                                <td><input v-model.number="item.cVal" type="number"
-                                                        class="table-input w-10 text-center"></td>
-                                                <td><input v-model.number="item.fVal" type="number"
-                                                        class="table-input w-10 text-center"></td>
-                                                <td><input v-model="item.check" class="table-input w-12"></td>
-                                                <td><input v-model.number="item.armor" type="number"
-                                                        class="table-input w-10 text-center"></td>
-                                                <td><input v-model="item.power" class="table-input w-12"></td>
-                                                <td><input v-model="item.condition" class="table-input w-12"></td>
-                                                <td><input v-model.number="item.price" type="number"
-                                                        class="table-input w-16 text-right"></td>
-                                                <td class="text-center"><span class="btn-del"
+                                    <template v-for="(item, idx) in character.vehicles" :key="idx">
+                                        <tbody
+                                            class="bg-slate-50 dark:bg-slate-900/40 border-2 border-slate-300 dark:border-slate-600 rounded-lg shadow-sm">
+                                            <tr class="border-b border-slate-200 dark:border-slate-700/50">
+                                                <td class="pt-2 pl-2"><input v-model="item.name"
+                                                        class="table-input-framed font-bold"></td>
+                                                <td class="pt-2"><input v-model="item.ap" type="text"
+                                                        class="table-input-framed w-20 text-center"></td>
+                                                <td class="pt-2"><input v-model="item.range"
+                                                        class="table-input-framed w-12"></td>
+                                                <td class="pt-2"><input v-model="item.target"
+                                                        class="table-input-framed w-12"></td>
+                                                <td class="pt-2"><input v-model.number="item.cVal" type="number"
+                                                        class="table-input-framed w-10 text-center"></td>
+                                                <td class="pt-2"><input v-model.number="item.fVal" type="number"
+                                                        class="table-input-framed w-10 text-center"></td>
+                                                <td class="pt-2"><input v-model="item.check"
+                                                        class="table-input-framed w-12"></td>
+                                                <td class="pt-2"><input v-model.number="item.armor" type="number"
+                                                        class="table-input-framed w-10 text-center"></td>
+                                                <td class="pt-2"><input v-model="item.power"
+                                                        class="table-input-framed w-12"></td>
+                                                <td class="pt-2"><input v-model="item.condition"
+                                                        class="table-input-framed w-12"></td>
+                                                <td class="pt-2"><input v-model.number="item.price" type="number"
+                                                        class="table-input-framed w-16 text-right"></td>
+                                                <td class="pt-2 pr-2 text-center"><span class="btn-del"
                                                         @click="removeRow(character.vehicles, idx)"
                                                         :class="{'opacity-0 pointer-events-none': character.vehicles.length <= 1}"
                                                         v-if="!isReadOnly">×</span>
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td colspan="12"><input v-model="item.details"
-                                                        class="table-input text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900/30"
+                                                <td colspan="12" class="pb-2 px-2 pt-1"><input v-model="item.details"
+                                                        class="table-input-framed text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900/30"
                                                         placeholder="特性・タグ・効果"></td>
                                             </tr>
-                                        </template>
-                                    </tbody>
+                                        </tbody>
+                                    </template>
                                 </table>
                                 <div class="btn-add" v-if="!isReadOnly"
                                     @click="addRow(character.vehicles, {name:'',ap:'',range:'',target:'',cVal:0,fVal:0,check:'',armor:0,power:'',condition:'',price:0,details:''})">
@@ -997,10 +1060,10 @@
                             <!-- Followers -->
                             <div class="panel overflow-x-auto">
                                 <h3 class="section-title">フォロワー (部隊)</h3>
-                                <table class="w-full text-sm min-w-[700px]">
+                                <table class="w-full text-sm min-w-[700px] border-separate border-spacing-y-2">
                                     <thead>
                                         <tr>
-                                            <th class="min-w-[150px]">名前</th>
+                                            <th class="min-w-[150px] pl-2">名前</th>
                                             <th>人数</th>
                                             <th>支出(単価)</th>
                                             <th>支出(合計)</th>
@@ -1009,40 +1072,44 @@
                                             <th></th>
                                         </tr>
                                     </thead>
-                                    <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-                                        <template v-for="(item, idx) in character.followers" :key="idx">
-                                            <tr class="bg-transparent border-none">
-                                                <td><input v-model="item.name" class="table-input font-bold"></td>
-                                                <td><input v-model.number="item.count" type="number"
-                                                        class="table-input w-16 text-center"></td>
-                                                <td><input v-model.number="item.unitPrice" type="number"
-                                                        class="table-input w-20 text-right"></td>
-                                                <td class="text-right px-2">{{ (item.count || 0) * (item.unitPrice || 0)
+                                    <template v-for="(item, idx) in character.followers" :key="idx">
+                                        <tbody
+                                            class="bg-slate-50 dark:bg-slate-900/40 border-2 border-slate-300 dark:border-slate-600 rounded-lg shadow-sm">
+                                            <tr class="border-b border-slate-200 dark:border-slate-700/50">
+                                                <td class="pt-2 pl-2"><input v-model="item.name"
+                                                        class="table-input-framed font-bold"></td>
+                                                <td class="pt-2"><input v-model.number="item.count" type="number"
+                                                        class="table-input-framed w-16 text-center"></td>
+                                                <td class="pt-2"><input v-model.number="item.unitPrice" type="number"
+                                                        class="table-input-framed w-20 text-right"></td>
+                                                <td class="pt-2 text-right px-2">{{ (item.count || 0) * (item.unitPrice
+                                                    || 0)
                                                     }}</td>
-                                                <td><input v-model.number="item.troopValue" type="number"
-                                                        class="table-input w-16 text-center"></td>
-                                                <td class="text-center px-2">{{ (item.count || 0) * (item.troopValue ||
+                                                <td class="pt-2"><input v-model.number="item.troopValue" type="number"
+                                                        class="table-input-framed w-16 text-center"></td>
+                                                <td class="pt-2 text-center px-2">{{ (item.count || 0) *
+                                                    (item.troopValue ||
                                                     0) }}</td>
-                                                <td class="text-center"><span class="btn-del"
+                                                <td class="pt-2 pr-2 text-center"><span class="btn-del"
                                                         @click="removeRow(character.followers, idx)"
                                                         :class="{'opacity-0 pointer-events-none': character.followers.length <= 1}"
                                                         v-if="!isReadOnly">×</span>
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td colspan="7">
+                                                <td colspan="7" class="pb-2 px-2 pt-1">
                                                     <div class="flex gap-2">
                                                         <input v-model="item.skill"
-                                                            class="table-input text-xs bg-slate-100 dark:bg-slate-900/30"
+                                                            class="table-input-framed text-xs bg-slate-100 dark:bg-slate-900/30"
                                                             placeholder="部隊スキル">
                                                         <input v-model="item.effect"
-                                                            class="table-input text-xs bg-slate-100 dark:bg-slate-900/30"
+                                                            class="table-input-framed text-xs bg-slate-100 dark:bg-slate-900/30"
                                                             placeholder="効果">
                                                     </div>
                                                 </td>
                                             </tr>
-                                        </template>
-                                    </tbody>
+                                        </tbody>
+                                    </template>
                                 </table>
                                 <div class="btn-add" v-if="!isReadOnly"
                                     @click="addRow(character.followers, {name:'',count:1,unitPrice:0,troopValue:0,skill:'',effect:''})">
@@ -1053,36 +1120,38 @@
                         <!-- Items -->
                         <div class="panel overflow-x-auto">
                             <h3 class="section-title">道具</h3>
-                            <table class="w-full text-sm min-w-[500px]">
+                            <table class="w-full text-sm min-w-[500px] border-separate border-spacing-y-2">
                                 <thead>
                                     <tr>
-                                        <th class="min-w-[150px]">名前</th>
+                                        <th class="min-w-[150px] pl-2">名前</th>
                                         <th>個数</th>
                                         <th>重量</th>
                                         <th></th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-                                    <template v-for="(item, idx) in character.items" :key="idx">
-                                        <tr>
-                                            <td><input v-model="item.name" class="table-input"></td>
-                                            <td><input v-model.number="item.count" type="number"
-                                                    class="table-input w-12 text-center"></td>
-                                            <td><input v-model.number="item.weight" type="number"
-                                                    class="table-input w-12 text-center"></td>
-                                            <td class="text-center"><span class="btn-del"
+                                <template v-for="(item, idx) in character.items" :key="idx">
+                                    <tbody
+                                        class="bg-slate-50 dark:bg-slate-900/40 border-2 border-slate-300 dark:border-slate-600 rounded-lg shadow-sm">
+                                        <tr class="border-b border-slate-200 dark:border-slate-700/50">
+                                            <td class="pt-2 pl-2"><input v-model="item.name" class="table-input-framed">
+                                            </td>
+                                            <td class="pt-2"><input v-model.number="item.count" type="number"
+                                                    class="table-input-framed w-12 text-center"></td>
+                                            <td class="pt-2"><input v-model.number="item.weight" type="number"
+                                                    class="table-input-framed w-12 text-center"></td>
+                                            <td class="pt-2 pr-2 text-center"><span class="btn-del"
                                                     @click="removeRow(character.items, idx)"
                                                     :class="{'opacity-0 pointer-events-none': character.items.length <= 1}"
                                                     v-if="!isReadOnly">×</span>
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td colspan="4"><input v-model="item.details"
-                                                    class="table-input text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900/30"
+                                            <td colspan="4" class="pb-2 px-2 pt-1"><input v-model="item.details"
+                                                    class="table-input-framed text-xs text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900/30"
                                                     placeholder="効果"></td>
                                         </tr>
-                                    </template>
-                                </tbody>
+                                    </tbody>
+                                </template>
                             </table>
                             <div class="btn-add" @click="addRow(character.items, {name:'',count:1,weight:0,details:''})"
                                 v-if="!isReadOnly">+
@@ -1280,6 +1349,10 @@
                         class="w-full bg-slate-200 hover:bg-slate-300 text-slate-800 dark:bg-slate-600 dark:hover:bg-slate-500 dark:text-white py-2 rounded text-sm transition mb-2">
                         保存して一覧に戻る
                     </button>
+                    <button type="button" @click="copyToCcfolia"
+                        class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded text-sm font-bold shadow-lg shadow-indigo-900/30 transition mb-2 flex items-center justify-center gap-2">
+                        <span>📋</span> ココフォリア形式コピー
+                    </button>
                     <button type="button" @click="view = 'dashboard'"
                         class="w-full bg-slate-200 hover:bg-slate-300 text-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-white py-2 rounded text-sm transition">
                         保存せず一覧に戻る
@@ -1308,6 +1381,10 @@
                     <button v-if="isOwner" type="button" @click="view = 'edit'"
                         class="w-full bg-green-600 hover:bg-green-500 py-3 rounded-lg font-bold shadow-lg shadow-green-900/30 transition mb-2">
                         編集する
+                    </button>
+                    <button type="button" @click="copyToCcfolia"
+                        class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded text-sm font-bold shadow-lg shadow-indigo-900/30 transition mb-2 flex items-center justify-center gap-2">
+                        <span>📋</span> ココフォリア形式コピー
                     </button>
 
 
@@ -1592,7 +1669,7 @@
             additionalKarma: Array(3).fill().map(() => ({ type: '', name: '', use: '', karma: 0, effect: '', details: '' })),
 
             skills: Array(5).fill().map(() => ({ name: '', cost: '', ap: '', range: '', target: '', check: '', effect: '' })),
-            weapons: Array(5).fill().map(() => ({ name: '', part: '', ap: 0, range: '', target: '', check: '', fVal: 0, cVal: 0, power: '', weight: 0, details: '' })),
+            weapons: Array(5).fill().map(() => ({ name: '', part: '', ap: 0, range: '', target: '', check: '', fVal: 0, cVal: 0, powerAttr: '', powerAbility: '身', powerValue: '', weight: 0, effect1: '', effect2: '', effect3: '', details: '' })),
             armors: Array(5).fill().map(() => ({ name: '', part: '', armor: 0, hpMod: 0, weight: 0, details: '' })),
             vehicles: Array(1).fill().map(() => ({ name: '', ap: 0, range: '', target: '', cVal: 0, fVal: 0, check: '', armor: 0, power: '', condition: '', price: 0, details: '' })),
             followers: Array(2).fill().map(() => ({ name: '', count: 1, unitPrice: 0, troopValue: 0, skill: '', effect: '' })),
@@ -2128,6 +2205,69 @@
                         this.showMessage('削除しました')
                         this.loadCharacters()
                         this.view = 'dashboard'
+                    }
+                },
+                async copyToCcfolia() {
+                    const c = this.character
+                    const name = c.personal.name || 'No Name'
+                    const init = this.calcAP
+                    const hp = this.calcHP
+                    const armor = this.calcArmor
+                    const troop = this.calcTroop
+                    const ap = this.calcAP
+
+                    const body = this.getStat('body')
+                    const mind = this.getStat('mind')
+                    const sense = this.getStat('sense')
+                    const intellect = this.getStat('intellect')
+
+                    // Params
+                    const params = [
+                        { label: '身体', value: body.toString() },
+                        { label: '精神', value: mind.toString() },
+                        { label: '感覚', value: sense.toString() },
+                        { label: '知性', value: intellect.toString() }
+                    ]
+
+                    // Status
+                    const status = [
+                        { label: 'HP', value: hp, max: hp },
+                        { label: '装甲値', value: armor, max: armor },
+                        { label: '部隊値', value: troop, max: troop },
+                        { label: 'AP', value: ap, max: ap }
+                    ]
+
+                    // Commands
+                    let commands = `sbs<={身体}*5 身体(スワップ)\nbs<={身体}*5 身体\ncsbs<={精神}*5 精神(スワップ)\nbs<={精神}*5 精神\ncsbs<={感覚}*5 感覚(スワップ)\nbs<={感覚}*5 感覚\ncsbs<={知性}*5 知性(スワップ)\nbs<={知性}*5 知性\n`
+
+                    // Weapons
+                    c.weapons.forEach(w => {
+                        if (w.name) {
+                            // "c[威力の数値] [武器名前]"
+                            // Ensure powerValue is used, defaulting to 0 if empty
+                            const pVal = w.powerValue || 0
+                            commands += `c${pVal} ${w.name}\n`
+                        }
+                    })
+
+                    const data = {
+                        kind: "character",
+                        data: {
+                            name: name,
+                            initiative: init,
+                            status: status,
+                            params: params,
+                            commands: commands,
+                            memo: `${name}\nPL名:${c.personal.playerName || ''}`
+                        }
+                    }
+
+                    try {
+                        await navigator.clipboard.writeText(JSON.stringify(data))
+                        alert('ココフォリア用駒データをコピーしました')
+                    } catch (err) {
+                        console.error('Copy failed', err)
+                        alert('コピーに失敗しました')
                     }
                 },
                 async loadCharacters() {
