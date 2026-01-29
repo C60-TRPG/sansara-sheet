@@ -1762,6 +1762,14 @@
                                 this.loadCharacterById(id)
                             }
                         })
+
+                        // Check for Password Recovery via Hash (Fallback)
+                        const hash = window.location.hash
+                        if (hash && hash.includes('type=recovery')) {
+                            this.view = 'account'
+                            this.showMessage('新しいパスワードを設定してください')
+                        }
+
                         this.supabase.auth.onAuthStateChange(async (event, session) => {
                             // Handle Password Recovery
                             if (event === 'PASSWORD_RECOVERY') {
