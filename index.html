@@ -2035,7 +2035,10 @@
                     const file = event.target.files[0]
                     if (!file || !this.user) return
 
-                    const fileName = `${this.user.id}/${Date.now()}_${file.name}`
+                    // Generate a safe file name to avoid "Invalid key" errors with Japanese characters
+                    const ext = file.name.split('.').pop()
+                    const safeName = Math.random().toString(36).substring(2, 15)
+                    const fileName = `${this.user.id}/${Date.now()}_${safeName}.${ext}`
                     const { data, error } = await this.supabase.storage
                         .from('images') // Spec says "Storage bucket", assuming 'images'
                         .upload(fileName, file)
